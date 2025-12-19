@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Layout } from '../components/Layout';
 import { FilterBar } from '../components/FilterBar';
 import { CalendarGrid } from '../components/CalendarGrid';
@@ -9,6 +9,7 @@ import { BookingEvent, Filters, ViewType, PEMT } from '../types';
 import { Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useBookings, useCreateBooking, useCheckConflict } from '@/hooks/useBookings';
+import { supabase } from '@/integrations/supabase/client';
 
 const Index: React.FC = () => {
   const { toast } = useToast();
@@ -26,8 +27,53 @@ const Index: React.FC = () => {
     carteira: ''
   });
   
-  const [aiInsights] = useState<string>('Sistema de Gestão PEMT Normatel conectado ao Cloud. Os agendamentos são salvos automaticamente no banco de dados.');
-  const [loadingInsights] = useState(false);
+  const [aiInsights, setAiInsights] = useState<string>('Analisando dados da PEMT...');
+  const [loadingInsights, setLoadingInsights] = useState(false);
+
+  const fetchInsights = useCallback(async () => {
+    setLoadingInsights(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-insights', {
+        body: { 
+          pemtId: selectedPemt.id,
+          selectedEvent: selectedEvent ? {
+            solicitante: selectedEvent.solicitante,
+            local: selectedEvent.local,
+            carteira: selectedEvent.carteira,
+            servicoTipo: selectedEvent.servicoTipo,
+            tempoServicoHoras: selectedEvent.tempoServicoHoras
+          } : null
+        }
+      });
+
+      if (error) throw error;
+      
+      if (data?.insight) {
+        setAiInsights(data.insight);
+      } else if (data?.error) {
+        setAiInsights(`⚠️ ${data.error}`);
+      }
+    } catch (error) {
+      console.error('Error fetching insights:', error);
+      setAiInsights('❌ Erro ao gerar insights. Tente novamente.');
+    } finally {
+      setLoadingInsights(false);
+    }
+  }, [selectedPemt.id, selectedEvent]);
+
+  // Fetch insights when PEMT changes or on initial load
+  useEffect(() => {
+    if (!isLoading) {
+      fetchInsights();
+    }
+  }, [selectedPemt.id, isLoading]);
+
+  // Fetch insights when an event is selected
+  useEffect(() => {
+    if (selectedEvent) {
+      fetchInsights();
+    }
+  }, [selectedEvent]);
 
   const viewStart = useMemo(() => {
     const d = new Date(currentDate);
