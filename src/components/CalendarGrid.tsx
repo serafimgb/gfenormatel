@@ -60,9 +60,12 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({ events, startDate, o
                           key={event.id}
                           onClick={() => onEventClick(event)}
                           className={`text-[9px] font-black p-1 rounded truncate cursor-pointer border-l-2 shadow-sm ${
-                            SERVICE_COLORS[event.carteira] || SERVICE_COLORS.DEFAULT
+                            event.isCancelled 
+                              ? 'bg-muted text-muted-foreground line-through opacity-60 border-l-destructive/50' 
+                              : SERVICE_COLORS[event.carteira] || SERVICE_COLORS.DEFAULT
                           }`}
                         >
+                          {event.isCancelled && <span className="text-destructive mr-1">✕</span>}
                           {event.solicitante}
                         </div>
                       ))}
@@ -143,18 +146,25 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({ events, startDate, o
                     const height = (durationMinutes * 80 / 60);
                     const colorClass = SERVICE_COLORS[event.carteira] || SERVICE_COLORS.DEFAULT;
 
+                    const isCancelled = event.isCancelled;
+
                     return (
                       <div
                         key={event.id}
                         onClick={() => onEventClick(event)}
                         style={{ top: `${top}px`, height: `${Math.max(height, 20)}px` }}
-                        className={`absolute left-0.5 right-0.5 p-1.5 border-l-4 rounded shadow-sm text-[10px] cursor-pointer hover:brightness-95 transition-all overflow-hidden z-20 ${colorClass} border-opacity-50 flex flex-col min-h-[20px]`}
+                        className={`absolute left-0.5 right-0.5 p-1.5 border-l-4 rounded shadow-sm text-[10px] cursor-pointer hover:brightness-95 transition-all overflow-hidden z-20 ${
+                          isCancelled 
+                            ? 'bg-muted border-l-destructive/50 opacity-60' 
+                            : colorClass
+                        } border-opacity-50 flex flex-col min-h-[20px]`}
                       >
-                        <div className="font-black truncate uppercase tracking-tighter leading-tight mb-0.5">
+                        <div className={`font-black truncate uppercase tracking-tighter leading-tight mb-0.5 ${isCancelled ? 'line-through text-muted-foreground' : ''}`}>
+                          {isCancelled && <span className="text-destructive mr-1">✕</span>}
                           {event.solicitante}
                         </div>
                         {height > 30 && (
-                          <div className="font-bold truncate opacity-80 italic leading-none">
+                          <div className={`font-bold truncate opacity-80 italic leading-none ${isCancelled ? 'line-through' : ''}`}>
                             {event.local}
                           </div>
                         )}

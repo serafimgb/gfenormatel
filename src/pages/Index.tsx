@@ -4,11 +4,12 @@ import { FilterBar } from '../components/FilterBar';
 import { CalendarGrid } from '../components/CalendarGrid';
 import { Sidebar } from '../components/Sidebar';
 import { BookingModal } from '../components/BookingModal';
+import { CancelBookingModal } from '../components/CancelBookingModal';
 import { PEMT_LIST } from '../constants';
 import { BookingEvent, Filters, ViewType, PEMT } from '../types';
 import { Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useBookings, useCreateBooking, useCheckConflict } from '@/hooks/useBookings';
+import { useBookings, useCreateBooking, useCheckConflict, useCancelBooking } from '@/hooks/useBookings';
 import { supabase } from '@/integrations/supabase/client';
 
 const Index: React.FC = () => {
@@ -16,12 +17,14 @@ const Index: React.FC = () => {
   const { data: allEvents = [], isLoading } = useBookings();
   const createBooking = useCreateBooking();
   const checkConflict = useCheckConflict();
+  const cancelBooking = useCancelBooking();
 
   const [selectedPemt, setSelectedPemt] = useState<PEMT>(PEMT_LIST[0]);
   const [viewType, setViewType] = useState<ViewType>(ViewType.Week);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<BookingEvent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   
   const [filters, setFilters] = useState<Filters>({
     carteira: ''
@@ -125,6 +128,28 @@ const Index: React.FC = () => {
     }
   };
 
+  const handleCancelBooking = async (reason: string) => {
+    if (!selectedEvent) return;
+    
+    try {
+      await cancelBooking.mutateAsync({ id: selectedEvent.id, reason });
+      
+      toast({
+        title: "Agendamento cancelado",
+        description: `O agendamento de ${selectedEvent.solicitante} foi cancelado.`,
+      });
+      
+      setIsCancelModalOpen(false);
+      setSelectedEvent(null);
+    } catch (error) {
+      toast({
+        title: "Erro ao cancelar",
+        description: "Ocorreu um erro ao cancelar o agendamento.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <Layout>
       <div className="flex flex-col h-full bg-card">
@@ -200,6 +225,7 @@ const Index: React.FC = () => {
             onClose={() => setSelectedEvent(null)}
             aiInsights={aiInsights}
             loadingInsights={loadingInsights}
+            onCancelClick={() => setIsCancelModalOpen(true)}
           />
         </div>
       </div>
@@ -211,6 +237,15 @@ const Index: React.FC = () => {
           onSave={handleSaveEvent}
           selectedPemt={selectedPemt}
           initialDate={currentDate}
+        />
+      )}
+
+      {isCancelModalOpen && selectedEvent && (
+        <CancelBookingModal
+          isOpen={isCancelModalOpen}
+          onClose={() => setIsCancelModalOpen(false)}
+          onConfirm={handleCancelBooking}
+          event={selectedEvent}
         />
       )}
     </Layout>

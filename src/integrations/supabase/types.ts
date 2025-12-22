@@ -16,11 +16,14 @@ export type Database = {
     Tables: {
       bookings: {
         Row: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
           carteira: string
           created_at: string
           descricao: string | null
           end_time: string
           id: string
+          is_cancelled: boolean
           local: string
           pemt_id: string
           servico_tipo: string
@@ -30,11 +33,14 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           carteira: string
           created_at?: string
           descricao?: string | null
           end_time: string
           id?: string
+          is_cancelled?: boolean
           local: string
           pemt_id: string
           servico_tipo: string
@@ -44,11 +50,14 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           carteira?: string
           created_at?: string
           descricao?: string | null
           end_time?: string
           id?: string
+          is_cancelled?: boolean
           local?: string
           pemt_id?: string
           servico_tipo?: string

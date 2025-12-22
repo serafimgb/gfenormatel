@@ -1,15 +1,17 @@
 import React from 'react';
 import { BookingEvent } from '../types';
-import { MapPin, Clock, Info, X } from 'lucide-react';
+import { MapPin, Clock, Info, X, Ban, AlertTriangle } from 'lucide-react';
+import { Button } from './ui/button';
 
 interface SidebarProps {
   selectedEvent: BookingEvent | null;
   onClose: () => void;
   aiInsights: string;
   loadingInsights: boolean;
+  onCancelClick?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsights, loadingInsights }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsights, loadingInsights, onCancelClick }) => {
   return (
     <div className={`fixed inset-y-0 right-0 w-80 bg-card border-l border-border shadow-2xl transition-transform duration-300 z-30 flex flex-col lg:relative lg:translate-x-0 ${
       selectedEvent || loadingInsights ? 'translate-x-0' : 'translate-x-full'
@@ -29,11 +31,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsi
       <div className="flex-1 overflow-y-auto p-5 space-y-6 bg-card no-scrollbar">
         {selectedEvent ? (
           <div className="space-y-5 animate-slide-in-from-right">
+            {selectedEvent.isCancelled && (
+              <div className="bg-destructive/10 border-2 border-destructive/30 p-4 rounded-xl">
+                <div className="flex items-center gap-2 text-destructive font-black text-xs uppercase mb-2">
+                  <AlertTriangle className="w-4 h-4" />
+                  Agendamento Cancelado
+                </div>
+                <p className="text-xs text-foreground/80 font-medium">
+                  <span className="font-black">Motivo:</span> {selectedEvent.cancellationReason}
+                </p>
+                {selectedEvent.cancelledAt && (
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Cancelado em: {selectedEvent.cancelledAt.toLocaleDateString('pt-BR')} às {selectedEvent.cancelledAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                  </p>
+                )}
+              </div>
+            )}
+
             <div className="pb-3 border-b border-border">
               <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-1 block">
                 Responsável
               </label>
-              <div className="text-xl font-black text-normatel-dark leading-tight">
+              <div className={`text-xl font-black leading-tight ${selectedEvent.isCancelled ? 'text-muted-foreground line-through' : 'text-normatel-dark'}`}>
                 {selectedEvent.solicitante}
               </div>
             </div>
@@ -86,6 +105,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsi
                 {selectedEvent.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} — {selectedEvent.end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
               </div>
             </div>
+
+            {!selectedEvent.isCancelled && onCancelClick && (
+              <div className="pt-4">
+                <Button 
+                  variant="outline"
+                  onClick={onCancelClick}
+                  className="w-full border-destructive/50 text-destructive hover:bg-destructive/10 font-black uppercase tracking-tighter text-xs"
+                >
+                  <Ban className="w-4 h-4 mr-2" />
+                  Cancelar Agendamento
+                </Button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-center py-20 px-8">
