@@ -16,6 +16,9 @@ export interface BookingEvent {
   end: Date;
   tempoServicoHoras: number;
   descricao?: string;
+  isCancelled?: boolean;
+  cancelledAt?: Date;
+  cancellationReason?: string;
 }
 
 export interface Filters {

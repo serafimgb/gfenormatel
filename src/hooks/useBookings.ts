@@ -14,6 +14,9 @@ const mapToBookingEvent = (row: any): BookingEvent => ({
   end: new Date(row.end_time),
   tempoServicoHoras: Number(row.tempo_servico_horas),
   descricao: row.descricao,
+  isCancelled: row.is_cancelled || false,
+  cancelledAt: row.cancelled_at ? new Date(row.cancelled_at) : undefined,
+  cancellationReason: row.cancellation_reason,
 });
 
 // Convert BookingEvent to database format
@@ -101,6 +104,7 @@ export const useCheckConflict = () => {
       .from('bookings')
       .select('id')
       .eq('pemt_id', pemtId)
+      .eq('is_cancelled', false) // Ignore cancelled bookings
       .lt('start_time', end.toISOString())
       .gt('end_time', start.toISOString());
 
@@ -117,4 +121,29 @@ export const useCheckConflict = () => {
 
     return (data?.length || 0) > 0;
   };
+};
+
+export const useCancelBooking = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
+      const { error } = await supabase
+        .from('bookings')
+        .update({
+          is_cancelled: true,
+          cancelled_at: new Date().toISOString(),
+          cancellation_reason: reason,
+        })
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error cancelling booking:', error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+    },
+  });
 };
