@@ -15,31 +15,44 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.png", "apple-touch-icon.png"],
+      injectRegister: "auto",
+      // Importante: no Android (principalmente em preview/dev), o app só abre como "app"
+      // quando o Service Worker está ativo. Isso habilita PWA também em desenvolvimento.
+      devOptions: {
+        enabled: true,
+      },
+      includeAssets: [
+        "favicon.png",
+        "apple-touch-icon.png",
+        "pwa-192.png",
+        "pwa-512.png",
+      ],
       manifest: {
+        id: "/",
         name: "NORA HUB - Gestão PEMT",
         short_name: "NORA HUB",
         description: "Sistema de gestão de agendamentos PEMT",
         theme_color: "#1e3a5f",
         background_color: "#0f172a",
         display: "standalone",
+        display_override: ["standalone", "minimal-ui", "browser"],
         orientation: "portrait",
         start_url: "/",
         scope: "/",
         icons: [
           {
-            src: "/favicon.png",
+            src: "/pwa-192.png",
             sizes: "192x192",
             type: "image/png",
-            purpose: "any maskable"
+            purpose: "any maskable",
           },
           {
-            src: "/favicon.png",
+            src: "/pwa-512.png",
             sizes: "512x512",
             type: "image/png",
-            purpose: "any maskable"
-          }
-        ]
+            purpose: "any maskable",
+          },
+        ],
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
@@ -51,12 +64,12 @@ export default defineConfig(({ mode }) => ({
               cacheName: "supabase-cache",
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24
-              }
-            }
-          }
-        ]
-      }
+                maxAgeSeconds: 60 * 60 * 24,
+              },
+            },
+          },
+        ],
+      },
     })
   ].filter(Boolean),
   resolve: {
