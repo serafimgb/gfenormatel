@@ -29,8 +29,8 @@ export default defineConfig(({ mode }) => ({
       ],
       manifest: {
         id: "/",
-        name: "NORA HUB - Gestão PEMT",
-        short_name: "NORA HUB",
+        name: "PEMT NORMATEL - 743",
+        short_name: "PEMT 743",
         description: "Sistema de gestão de agendamentos PEMT",
         theme_color: "#1e3a5f",
         background_color: "#0f172a",
