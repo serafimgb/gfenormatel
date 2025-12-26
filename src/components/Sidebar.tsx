@@ -134,7 +134,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsi
           <div className="flex items-center mb-4 space-x-2">
             <div className="w-2 h-2 rounded-full bg-normatel-light animate-pulse-dot" />
             <h3 className="text-[10px] font-black text-normatel-dark uppercase tracking-[0.2em]">
-              Normatel Insights
+              NORA HUB
             </h3>
           </div>
           <div className={`p-4 rounded-2xl bg-foreground text-background text-[12px] font-medium leading-relaxed shadow-xl relative border border-background/10 whitespace-pre-wrap ${
