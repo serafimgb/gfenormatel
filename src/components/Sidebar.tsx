@@ -1,6 +1,6 @@
 import React from 'react';
-import { BookingEvent } from '../types';
-import { MapPin, Clock, Info, X, Ban, AlertTriangle } from 'lucide-react';
+import { BookingEvent, EquipmentType } from '../types';
+import { MapPin, Clock, Info, X, Ban, AlertTriangle, Truck } from 'lucide-react';
 import { Button } from './ui/button';
 
 interface SidebarProps {
@@ -9,9 +9,20 @@ interface SidebarProps {
   aiInsights: string;
   loadingInsights: boolean;
   onCancelClick?: () => void;
+  equipmentTypes?: EquipmentType[];
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsights, loadingInsights, onCancelClick }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsights, loadingInsights, onCancelClick, equipmentTypes = [] }) => {
+  const getEquipmentName = (equipmentTypeId: string) => {
+    const equipment = equipmentTypes.find(eq => eq.id === equipmentTypeId);
+    return equipment?.name || equipmentTypeId;
+  };
+
+  const getEquipmentColor = (equipmentTypeId: string) => {
+    const equipment = equipmentTypes.find(eq => eq.id === equipmentTypeId);
+    return equipment?.color || '#6b7280';
+  };
+
   return (
     <div className={`fixed inset-y-0 right-0 w-80 bg-card border-l border-border shadow-2xl transition-transform duration-300 z-30 flex flex-col lg:relative lg:translate-x-0 ${
       selectedEvent || loadingInsights ? 'translate-x-0' : 'translate-x-full'
@@ -47,6 +58,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsi
                 )}
               </div>
             )}
+
+            {/* Equipment Type Badge */}
+            <div 
+              className="flex items-center gap-2 p-3 rounded-xl border-2"
+              style={{ 
+                backgroundColor: `${getEquipmentColor(selectedEvent.equipmentType)}20`,
+                borderColor: `${getEquipmentColor(selectedEvent.equipmentType)}40`
+              }}
+            >
+              <Truck className="w-5 h-5" style={{ color: getEquipmentColor(selectedEvent.equipmentType) }} />
+              <span className="font-black text-sm" style={{ color: getEquipmentColor(selectedEvent.equipmentType) }}>
+                {getEquipmentName(selectedEvent.equipmentType)}
+              </span>
+            </div>
 
             <div className="pb-3 border-b border-border">
               <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-1 block">

@@ -5,9 +5,24 @@ export interface PEMT {
   mailbox: string;
 }
 
+export interface EquipmentType {
+  id: string;
+  name: string;
+  color: string;
+  icon?: string;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+}
+
 export interface BookingEvent {
   id: string;
   pemtId: string;
+  equipmentType: string;
+  projectId: string;
   solicitante: string;
   carteira: string;
   local: string;
@@ -23,6 +38,7 @@ export interface BookingEvent {
 
 export interface Filters {
   carteira: string;
+  equipmentType: string;
 }
 
 export enum ViewType {
@@ -34,6 +50,8 @@ export enum ViewType {
 export interface BookingEventDB {
   id: string;
   pemt_id: string;
+  equipment_type: string;
+  project_id: string;
   solicitante: string;
   carteira: string;
   local: string;
