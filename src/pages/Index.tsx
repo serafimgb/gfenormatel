@@ -5,21 +5,38 @@ import { CalendarGrid } from '../components/CalendarGrid';
 import { Sidebar } from '../components/Sidebar';
 import { BookingModal } from '../components/BookingModal';
 import { CancelBookingModal } from '../components/CancelBookingModal';
-import { PEMT_LIST } from '../constants';
-import { BookingEvent, Filters, ViewType, PEMT } from '../types';
-import { Plus } from 'lucide-react';
+import { BookingEvent, Filters, ViewType, EquipmentType, Project } from '../types';
+import { Plus, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useBookings, useCreateBooking, useCheckConflict, useCancelBooking } from '@/hooks/useBookings';
+import { useProjects } from '@/hooks/useProjects';
+import { useEquipmentTypes } from '@/hooks/useEquipmentTypes';
 import { supabase } from '@/integrations/supabase/client';
+import { DEFAULT_PROJECTS, DEFAULT_EQUIPMENT_TYPES, EQUIPMENT_COLORS } from '@/constants';
 
 const Index: React.FC = () => {
   const { toast } = useToast();
-  const { data: allEvents = [], isLoading } = useBookings();
+  
+  // Fetch projects and equipment types
+  const { data: projects = DEFAULT_PROJECTS } = useProjects();
+  const { data: equipmentTypes = DEFAULT_EQUIPMENT_TYPES } = useEquipmentTypes();
+  
+  // Current project selection
+  const [selectedProject, setSelectedProject] = useState<Project>(projects[0] || DEFAULT_PROJECTS[0]);
+  const [selectedEquipmentType, setSelectedEquipmentType] = useState<EquipmentType | null>(null);
+  
+  // Update selected project when projects load
+  useEffect(() => {
+    if (projects.length > 0 && !projects.find(p => p.id === selectedProject.id)) {
+      setSelectedProject(projects[0]);
+    }
+  }, [projects]);
+
+  const { data: allEvents = [], isLoading } = useBookings(selectedProject.id);
   const createBooking = useCreateBooking();
   const checkConflict = useCheckConflict();
   const cancelBooking = useCancelBooking();
 
-  const [selectedPemt, setSelectedPemt] = useState<PEMT>(PEMT_LIST[0]);
   const [viewType, setViewType] = useState<ViewType>(ViewType.Week);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<BookingEvent | null>(null);
@@ -27,10 +44,11 @@ const Index: React.FC = () => {
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   
   const [filters, setFilters] = useState<Filters>({
-    carteira: ''
+    carteira: '',
+    equipmentType: ''
   });
   
-  const [aiInsights, setAiInsights] = useState<string>('Analisando dados da PEMT...');
+  const [aiInsights, setAiInsights] = useState<string>('Analisando dados...');
   const [loadingInsights, setLoadingInsights] = useState(false);
 
   const fetchInsights = useCallback(async () => {
@@ -38,7 +56,8 @@ const Index: React.FC = () => {
     try {
       const { data, error } = await supabase.functions.invoke('generate-insights', {
         body: { 
-          pemtId: selectedPemt.id,
+          projectId: selectedProject.id,
+          equipmentType: selectedEquipmentType?.id,
           selectedEvent: selectedEvent ? {
             solicitante: selectedEvent.solicitante,
             local: selectedEvent.local,
@@ -62,16 +81,14 @@ const Index: React.FC = () => {
     } finally {
       setLoadingInsights(false);
     }
-  }, [selectedPemt.id, selectedEvent]);
+  }, [selectedProject.id, selectedEquipmentType?.id, selectedEvent]);
 
-  // Fetch insights when PEMT changes or on initial load
   useEffect(() => {
     if (!isLoading) {
       fetchInsights();
     }
-  }, [selectedPemt.id, isLoading]);
+  }, [selectedProject.id, isLoading]);
 
-  // Fetch insights when an event is selected
   useEffect(() => {
     if (selectedEvent) {
       fetchInsights();
@@ -93,21 +110,26 @@ const Index: React.FC = () => {
 
   const filteredEvents = useMemo(() => {
     return allEvents.filter(e => {
-      const isSamePemt = e.pemtId === selectedPemt.id;
+      const matchesEquipmentType = !filters.equipmentType || e.equipmentType === filters.equipmentType;
       const matchesCarteira = !filters.carteira || e.carteira === filters.carteira;
-      return isSamePemt && matchesCarteira;
+      return matchesEquipmentType && matchesCarteira;
     });
-  }, [allEvents, selectedPemt, filters]);
+  }, [allEvents, filters]);
 
   const handleSaveEvent = async (newEvent: BookingEvent) => {
     try {
-      // Check for conflicts
-      const hasConflict = await checkConflict(newEvent.pemtId, newEvent.start, newEvent.end);
+      const hasConflict = await checkConflict(
+        newEvent.pemtId,
+        newEvent.equipmentType,
+        newEvent.projectId,
+        newEvent.start,
+        newEvent.end
+      );
 
       if (hasConflict) {
         toast({
           title: "Conflito operacional!",
-          description: "Esta PEMT já está ocupada neste horário.",
+          description: "Este equipamento já está ocupado neste horário.",
           variant: "destructive"
         });
         return;
@@ -153,19 +175,62 @@ const Index: React.FC = () => {
   return (
     <Layout>
       <div className="flex flex-col h-full bg-card">
+        {/* Project Selector Header */}
+        <div className="bg-normatel-gradient px-4 sm:px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <select
+                value={selectedProject.id}
+                onChange={(e) => {
+                  const project = projects.find(p => p.id === e.target.value);
+                  if (project) setSelectedProject(project);
+                }}
+                className="appearance-none bg-primary-foreground/10 border-2 border-primary-foreground/30 rounded-xl px-4 pr-10 py-2 text-sm font-black text-primary-foreground cursor-pointer focus:outline-none focus:border-primary-foreground/60 transition-all"
+              >
+                {projects.map(p => (
+                  <option key={p.id} value={p.id} className="text-foreground bg-card">
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-2.5 w-4 h-4 text-primary-foreground pointer-events-none" strokeWidth={3} />
+            </div>
+            <span className="text-primary-foreground/80 text-xs font-bold hidden sm:block">
+              {selectedProject.description}
+            </span>
+          </div>
+        </div>
+
+        {/* Equipment Type Tabs */}
         <div className="flex bg-muted px-4 sm:px-6 border-b border-border items-center justify-between shadow-sm">
           <div className="flex overflow-x-auto no-scrollbar scroll-smooth">
-            {PEMT_LIST.map(p => (
+            <button
+              onClick={() => {
+                setSelectedEquipmentType(null);
+                setFilters(prev => ({ ...prev, equipmentType: '' }));
+              }}
+              className={`px-4 py-4 text-xs font-black transition-all border-b-4 uppercase tracking-wider whitespace-nowrap ${
+                !selectedEquipmentType 
+                ? 'border-normatel-light text-normatel-dark' 
+                : 'border-transparent text-foreground hover:text-normatel-dark hover:border-muted-foreground'
+              }`}
+            >
+              Todos
+            </button>
+            {equipmentTypes.map(eq => (
               <button
-                key={p.id}
-                onClick={() => setSelectedPemt(p)}
+                key={eq.id}
+                onClick={() => {
+                  setSelectedEquipmentType(eq);
+                  setFilters(prev => ({ ...prev, equipmentType: eq.id }));
+                }}
                 className={`px-4 py-4 text-xs font-black transition-all border-b-4 uppercase tracking-wider whitespace-nowrap ${
-                  selectedPemt.id === p.id 
+                  selectedEquipmentType?.id === eq.id 
                   ? 'border-normatel-light text-normatel-dark' 
                   : 'border-transparent text-foreground hover:text-normatel-dark hover:border-muted-foreground'
                 }`}
               >
-                {p.name}
+                {eq.name}
               </button>
             ))}
           </div>
@@ -197,6 +262,7 @@ const Index: React.FC = () => {
           }}
           onToday={() => setCurrentDate(new Date())}
           currentLabel={viewStart.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+          equipmentTypes={equipmentTypes}
         />
 
         <div className="flex-1 flex overflow-hidden">
@@ -216,6 +282,7 @@ const Index: React.FC = () => {
                 startDate={viewStart} 
                 onEventClick={setSelectedEvent}
                 viewType={viewType}
+                equipmentTypes={equipmentTypes}
               />
             )}
           </div>
@@ -226,6 +293,7 @@ const Index: React.FC = () => {
             aiInsights={aiInsights}
             loadingInsights={loadingInsights}
             onCancelClick={() => setIsCancelModalOpen(true)}
+            equipmentTypes={equipmentTypes}
           />
         </div>
       </div>
@@ -235,7 +303,9 @@ const Index: React.FC = () => {
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onSave={handleSaveEvent}
-          selectedPemt={selectedPemt}
+          selectedProject={selectedProject}
+          selectedEquipmentType={selectedEquipmentType}
+          equipmentTypes={equipmentTypes}
           initialDate={currentDate}
         />
       )}

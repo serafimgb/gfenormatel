@@ -22,10 +22,12 @@ export type Database = {
           created_at: string
           descricao: string | null
           end_time: string
+          equipment_type: string | null
           id: string
           is_cancelled: boolean
           local: string
           pemt_id: string
+          project_id: string
           servico_tipo: string
           solicitante: string
           start_time: string
@@ -39,10 +41,12 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           end_time: string
+          equipment_type?: string | null
           id?: string
           is_cancelled?: boolean
           local: string
           pemt_id: string
+          project_id?: string
           servico_tipo: string
           solicitante: string
           start_time: string
@@ -56,15 +60,62 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           end_time?: string
+          equipment_type?: string | null
           id?: string
           is_cancelled?: boolean
           local?: string
           pemt_id?: string
+          project_id?: string
           servico_tipo?: string
           solicitante?: string
           start_time?: string
           tempo_servico_horas?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      equipment_types: {
+        Row: {
+          color: string
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          icon?: string | null
+          id: string
+          name: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
         }
         Relationships: []
       }

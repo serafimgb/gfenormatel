@@ -6,6 +6,8 @@ import { BookingEvent } from '@/types';
 const mapToBookingEvent = (row: any): BookingEvent => ({
   id: row.id,
   pemtId: row.pemt_id,
+  equipmentType: row.equipment_type || 'PEMT',
+  projectId: row.project_id || '743',
   solicitante: row.solicitante,
   carteira: row.carteira,
   local: row.local,
@@ -22,6 +24,8 @@ const mapToBookingEvent = (row: any): BookingEvent => ({
 // Convert BookingEvent to database format
 const mapToDBFormat = (event: BookingEvent) => ({
   pemt_id: event.pemtId,
+  equipment_type: event.equipmentType,
+  project_id: event.projectId,
   solicitante: event.solicitante,
   carteira: event.carteira,
   local: event.local,
@@ -32,14 +36,20 @@ const mapToDBFormat = (event: BookingEvent) => ({
   descricao: event.descricao,
 });
 
-export const useBookings = () => {
+export const useBookings = (projectId?: string) => {
   return useQuery({
-    queryKey: ['bookings'],
+    queryKey: ['bookings', projectId],
     queryFn: async (): Promise<BookingEvent[]> => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('bookings')
         .select('*')
         .order('start_time', { ascending: true });
+
+      if (projectId) {
+        query = query.eq('project_id', projectId);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error fetching bookings:', error);
@@ -99,12 +109,13 @@ export const useDeleteBooking = () => {
 };
 
 export const useCheckConflict = () => {
-  return async (pemtId: string, start: Date, end: Date, excludeId?: string): Promise<boolean> => {
+  return async (pemtId: string, equipmentType: string, projectId: string, start: Date, end: Date, excludeId?: string): Promise<boolean> => {
     let query = supabase
       .from('bookings')
       .select('id')
-      .eq('pemt_id', pemtId)
-      .eq('is_cancelled', false) // Ignore cancelled bookings
+      .eq('equipment_type', equipmentType)
+      .eq('project_id', projectId)
+      .eq('is_cancelled', false)
       .lt('start_time', end.toISOString())
       .gt('end_time', start.toISOString());
 

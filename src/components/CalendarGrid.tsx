@@ -1,26 +1,29 @@
 import React from 'react';
-import { BookingEvent, ViewType } from '../types';
-import { SERVICE_COLORS } from '../constants';
+import { BookingEvent, ViewType, EquipmentType } from '../types';
+import { EQUIPMENT_COLORS } from '../constants';
 
 interface CalendarGridProps {
   events: BookingEvent[];
   startDate: Date;
   onEventClick: (e: BookingEvent) => void;
   viewType: ViewType;
+  equipmentTypes?: EquipmentType[];
 }
 
-export const CalendarGrid: React.FC<CalendarGridProps> = ({ events, startDate, onEventClick, viewType }) => {
+export const CalendarGrid: React.FC<CalendarGridProps> = ({ events, startDate, onEventClick, viewType, equipmentTypes = [] }) => {
+  const getEquipmentColor = (equipmentType: string) => {
+    return EQUIPMENT_COLORS[equipmentType] || EQUIPMENT_COLORS.DEFAULT;
+  };
+
   if (viewType === ViewType.Month) {
     const startOfMonth = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
     const lastDayOfMonth = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0).getDate();
     const startDayOfWeek = startOfMonth.getDay();
     
     const daysInGrid: (Date | null)[] = [];
-    // Fill empty slots from prev month
     for (let i = 0; i < startDayOfWeek; i++) {
       daysInGrid.push(null);
     }
-    // Fill days of month
     for (let i = 1; i <= lastDayOfMonth; i++) {
       daysInGrid.push(new Date(startDate.getFullYear(), startDate.getMonth(), i));
     }
@@ -62,7 +65,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({ events, startDate, o
                           className={`text-[9px] font-black p-1 rounded truncate cursor-pointer border-l-2 shadow-sm ${
                             event.isCancelled 
                               ? 'bg-muted text-muted-foreground line-through opacity-60 border-l-destructive/50' 
-                              : SERVICE_COLORS[event.carteira] || SERVICE_COLORS.DEFAULT
+                              : getEquipmentColor(event.equipmentType)
                           }`}
                         >
                           {event.isCancelled && <span className="text-destructive mr-1">✕</span>}
@@ -144,7 +147,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({ events, startDate, o
                     const top = ((startHour - 8) * 80) + (startMin * 80 / 60);
                     const durationMinutes = (event.end.getTime() - event.start.getTime()) / (1000 * 60);
                     const height = (durationMinutes * 80 / 60);
-                    const colorClass = SERVICE_COLORS[event.carteira] || SERVICE_COLORS.DEFAULT;
+                    const colorClass = getEquipmentColor(event.equipmentType);
 
                     const isCancelled = event.isCancelled;
 
