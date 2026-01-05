@@ -25,7 +25,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsi
 
   return (
     <div className={`fixed inset-y-0 right-0 w-80 bg-card border-l border-border shadow-2xl transition-transform duration-300 z-30 flex flex-col lg:relative lg:translate-x-0 ${
-      selectedEvent || loadingInsights ? 'translate-x-0' : 'translate-x-full'
+      selectedEvent ? 'translate-x-0' : 'translate-x-full'
     }`}>
       <div className="p-4 border-b border-border flex justify-between items-center bg-muted shrink-0">
         <h2 className="font-black text-[10px] uppercase tracking-widest text-normatel-dark">
