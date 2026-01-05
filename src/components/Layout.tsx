@@ -26,7 +26,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               Normatel
             </h1>
             <p className="text-[10px] text-primary-foreground font-black uppercase tracking-[0.15em] mt-0.5 leading-none drop-shadow-sm">
-              GESTÃO DE PEMTS | PROJETO 743
+              GFE - GESTÃO DE FROTA ESPECIAL
             </p>
           </div>
         </div>
