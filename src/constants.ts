@@ -18,7 +18,7 @@ export const DEFAULT_EQUIPMENT_TYPES: EquipmentType[] = [
 
 // Default projects - will be fetched from database
 export const DEFAULT_PROJECTS: Project[] = [
-  { id: '743', name: 'Projeto 743', description: 'Projeto principal 743' },
+  { id: '743', name: 'Projeto 743', description: 'Projeto 743' },
   { id: '741', name: 'Projeto 741', description: 'Projeto 741' },
 ];
 
