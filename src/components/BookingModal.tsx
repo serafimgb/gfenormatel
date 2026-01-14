@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { BookingEvent, EquipmentType, Project } from '../types';
 import { CARTEIRA_OPTIONS } from '../constants';
-import { Calendar, X, ChevronDown } from 'lucide-react';
+import { Calendar, X, ChevronDown, Layers } from 'lucide-react';
 import { Button } from './ui/button';
+import { Checkbox } from './ui/checkbox';
 
 interface BookingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (event: BookingEvent) => void;
+  onSave: (event: BookingEvent, bookBothProjects?: boolean) => void;
   selectedProject: Project;
   selectedEquipmentType: EquipmentType | null;
   equipmentTypes: EquipmentType[];
   initialDate: Date;
+  allProjects: Project[];
 }
 
 export const BookingModal: React.FC<BookingModalProps> = ({ 
@@ -21,7 +23,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   selectedProject,
   selectedEquipmentType,
   equipmentTypes,
-  initialDate 
+  initialDate,
+  allProjects
 }) => {
   const getLocalDateString = (date: Date) => {
     const d = new Date(date);
@@ -42,7 +45,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     tempoServicoHoras: '1'
   });
 
+  const [bookBothProjects, setBookBothProjects] = useState(false);
+
   if (!isOpen) return null;
+
+  // Check if there are multiple projects available
+  const hasMultipleProjects = allProjects.length > 1;
+  const otherProjects = allProjects.filter(p => p.id !== selectedProject.id);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +65,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
     const newEvent: BookingEvent = {
       id: Math.random().toString(36).substr(2, 9),
-      pemtId: formData.equipmentType, // Using equipment type as pemtId for compatibility
+      pemtId: formData.equipmentType,
       equipmentType: formData.equipmentType,
       projectId: selectedProject.id,
       solicitante: formData.solicitante,
@@ -68,7 +77,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       tempoServicoHoras: Number(formData.tempoServicoHoras)
     };
 
-    onSave(newEvent);
+    onSave(newEvent, bookBothProjects);
     onClose();
   };
 
@@ -212,6 +221,32 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 />
               </div>
             </div>
+
+            {/* Multi-project booking option */}
+            {hasMultipleProjects && (
+              <div className="bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                <div className="flex items-start gap-3">
+                  <Checkbox 
+                    id="book-both"
+                    checked={bookBothProjects}
+                    onCheckedChange={(checked) => setBookBothProjects(checked === true)}
+                    className="mt-0.5 border-amber-500 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
+                  />
+                  <div className="flex-1">
+                    <label 
+                      htmlFor="book-both" 
+                      className="text-sm font-black text-amber-800 dark:text-amber-200 cursor-pointer flex items-center gap-2"
+                    >
+                      <Layers className="w-4 h-4" />
+                      Agendar em ambos os projetos
+                    </label>
+                    <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                      Também criar agendamento em: {otherProjects.map(p => p.name).join(', ')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="pt-4 flex gap-3">
@@ -227,7 +262,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               type="submit" 
               className="flex-1 bg-normatel-gradient font-black uppercase tracking-tighter hover:brightness-110"
             >
-              Agendar
+              {bookBothProjects ? 'Agendar (2 projetos)' : 'Agendar'}
             </Button>
           </div>
         </form>

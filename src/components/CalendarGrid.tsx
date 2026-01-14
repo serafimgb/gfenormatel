@@ -1,6 +1,8 @@
 import React from 'react';
 import { BookingEvent, ViewType, EquipmentType } from '../types';
 import { EQUIPMENT_COLORS } from '../constants';
+import { doTimesOverlap } from '@/hooks/useOtherProjectBookings';
+import { Layers } from 'lucide-react';
 
 interface CalendarGridProps {
   events: BookingEvent[];
@@ -8,11 +10,37 @@ interface CalendarGridProps {
   onEventClick: (e: BookingEvent) => void;
   viewType: ViewType;
   equipmentTypes?: EquipmentType[];
+  otherProjectEvents?: BookingEvent[];
+  currentProjectId?: string;
 }
 
-export const CalendarGrid: React.FC<CalendarGridProps> = ({ events, startDate, onEventClick, viewType, equipmentTypes = [] }) => {
+export const CalendarGrid: React.FC<CalendarGridProps> = ({ 
+  events, 
+  startDate, 
+  onEventClick, 
+  viewType, 
+  equipmentTypes = [],
+  otherProjectEvents = [],
+  currentProjectId
+}) => {
   const getEquipmentColor = (equipmentType: string) => {
     return EQUIPMENT_COLORS[equipmentType] || EQUIPMENT_COLORS.DEFAULT;
+  };
+
+  // Check if an event has overlapping booking in another project
+  const hasOverlapInOtherProject = (event: BookingEvent): boolean => {
+    return otherProjectEvents.some(other => 
+      other.equipmentType === event.equipmentType &&
+      doTimesOverlap(event.start, event.end, other.start, other.end)
+    );
+  };
+
+  // Get overlapping events from other projects for a given event
+  const getOverlappingOtherEvents = (event: BookingEvent): BookingEvent[] => {
+    return otherProjectEvents.filter(other => 
+      other.equipmentType === event.equipmentType &&
+      doTimesOverlap(event.start, event.end, other.start, other.end)
+    );
   };
 
   if (viewType === ViewType.Month) {
@@ -38,50 +66,79 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({ events, startDate, o
           ))}
         </div>
         <div className="flex-1 grid grid-cols-7 grid-rows-5 overflow-y-auto no-scrollbar">
-          {daysInGrid.map((day, idx) => (
-            <div 
-              key={idx} 
-              className={`min-h-[120px] border-b border-r border-calendar-border p-1 ${
-                !day ? 'bg-muted/50' : 'bg-card'
-              }`}
-            >
-              {day && (
-                <>
-                  <div className={`text-[11px] font-black mb-1 ${
-                    day.toDateString() === new Date().toDateString() 
-                      ? 'text-normatel-light bg-normatel-light/10 w-6 h-6 flex items-center justify-center rounded-full mx-auto' 
-                      : 'text-muted-foreground text-center'
-                  }`}>
-                    {day.getDate()}
-                  </div>
-                  <div className="space-y-1">
-                    {events
-                      .filter(e => e.start.toDateString() === day.toDateString())
-                      .slice(0, 3)
-                      .map(event => (
+          {daysInGrid.map((day, idx) => {
+            // Get ghost events for this day (from other projects, not already in current project events)
+            const dayGhostEvents = day ? otherProjectEvents.filter(e => 
+              e.start.toDateString() === day.toDateString() &&
+              !events.some(ce => 
+                ce.equipmentType === e.equipmentType &&
+                doTimesOverlap(ce.start, ce.end, e.start, e.end)
+              )
+            ) : [];
+
+            return (
+              <div 
+                key={idx} 
+                className={`min-h-[120px] border-b border-r border-calendar-border p-1 ${
+                  !day ? 'bg-muted/50' : 'bg-card'
+                }`}
+              >
+                {day && (
+                  <>
+                    <div className={`text-[11px] font-black mb-1 ${
+                      day.toDateString() === new Date().toDateString() 
+                        ? 'text-normatel-light bg-normatel-light/10 w-6 h-6 flex items-center justify-center rounded-full mx-auto' 
+                        : 'text-muted-foreground text-center'
+                    }`}>
+                      {day.getDate()}
+                    </div>
+                    <div className="space-y-1">
+                      {/* Ghost events from other projects */}
+                      {dayGhostEvents.slice(0, 2).map(event => (
                         <div 
-                          key={event.id}
-                          onClick={() => onEventClick(event)}
-                          className={`text-[9px] font-black p-1 rounded truncate cursor-pointer border-l-2 shadow-sm ${
-                            event.isCancelled 
-                              ? 'bg-muted text-muted-foreground line-through opacity-60 border-l-destructive/50' 
-                              : getEquipmentColor(event.equipmentType)
-                          }`}
+                          key={`ghost-${event.id}`}
+                          className="text-[9px] font-black p-1 rounded truncate border-l-2 opacity-40 bg-muted/50 border-l-muted-foreground border-dashed"
+                          title={`${event.solicitante} (Projeto ${event.projectId})`}
                         >
-                          {event.isCancelled && <span className="text-destructive mr-1">✕</span>}
-                          {event.solicitante}
+                          <span className="text-muted-foreground">👻 {event.solicitante}</span>
                         </div>
                       ))}
-                    {events.filter(e => e.start.toDateString() === day.toDateString()).length > 3 && (
-                      <div className="text-[8px] font-black text-normatel-dark text-center">
-                        +{events.filter(e => e.start.toDateString() === day.toDateString()).length - 3} mais
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-          ))}
+                      
+                      {/* Current project events */}
+                      {events
+                        .filter(e => e.start.toDateString() === day.toDateString())
+                        .slice(0, 3 - dayGhostEvents.slice(0, 2).length)
+                        .map(event => {
+                          const hasOverlap = hasOverlapInOtherProject(event);
+                          return (
+                            <div 
+                              key={event.id}
+                              onClick={() => onEventClick(event)}
+                              className={`text-[9px] font-black p-1 rounded truncate cursor-pointer border-l-2 shadow-sm relative ${
+                                event.isCancelled 
+                                  ? 'bg-muted text-muted-foreground line-through opacity-60 border-l-destructive/50' 
+                                  : getEquipmentColor(event.equipmentType)
+                              } ${hasOverlap ? 'ring-2 ring-amber-500 ring-offset-1' : ''}`}
+                            >
+                              {hasOverlap && (
+                                <Layers className="w-3 h-3 absolute -top-1 -right-1 text-amber-500 bg-card rounded-full p-0.5" />
+                              )}
+                              {event.isCancelled && <span className="text-destructive mr-1">✕</span>}
+                              {event.solicitante}
+                            </div>
+                          );
+                        })}
+                      {events.filter(e => e.start.toDateString() === day.toDateString()).length > 3 && (
+                        <div className="text-[8px] font-black text-normatel-dark text-center">
+                          +{events.filter(e => e.start.toDateString() === day.toDateString()).length - 3} mais
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     );
@@ -130,18 +187,27 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({ events, startDate, o
           </div>
 
           <div className="flex-1 flex relative">
-            {days.map((day, dIdx) => (
-              <div 
-                key={dIdx} 
-                className="flex-1 border-r border-calendar-border last:border-r-0 relative min-h-[880px] box-border"
-              >
-                {hours.map(h => (
-                  <div key={h} className="h-20 border-b border-calendar-grid box-border" />
-                ))}
+            {days.map((day, dIdx) => {
+              // Get ghost events for this day (from other projects)
+              const dayGhostEvents = otherProjectEvents.filter(e => 
+                e.start.toDateString() === day.toDateString() &&
+                !events.some(ce => 
+                  ce.equipmentType === e.equipmentType &&
+                  doTimesOverlap(ce.start, ce.end, e.start, e.end)
+                )
+              );
 
-                {events
-                  .filter(e => e.start.toDateString() === day.toDateString())
-                  .map(event => {
+              return (
+                <div 
+                  key={dIdx} 
+                  className="flex-1 border-r border-calendar-border last:border-r-0 relative min-h-[880px] box-border"
+                >
+                  {hours.map(h => (
+                    <div key={h} className="h-20 border-b border-calendar-grid box-border" />
+                  ))}
+
+                  {/* Ghost events from other projects */}
+                  {dayGhostEvents.map(event => {
                     const startHour = event.start.getHours();
                     const startMin = event.start.getMinutes();
                     const top = ((startHour - 8) * 80) + (startMin * 80 / 60);
@@ -149,26 +215,20 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({ events, startDate, o
                     const height = (durationMinutes * 80 / 60);
                     const colorClass = getEquipmentColor(event.equipmentType);
 
-                    const isCancelled = event.isCancelled;
-
                     return (
                       <div
-                        key={event.id}
-                        onClick={() => onEventClick(event)}
+                        key={`ghost-${event.id}`}
                         style={{ top: `${top}px`, height: `${Math.max(height, 20)}px` }}
-                        className={`absolute left-0.5 right-0.5 p-1.5 border-l-4 rounded shadow-sm text-[10px] cursor-pointer hover:brightness-95 transition-all overflow-hidden z-20 ${
-                          isCancelled 
-                            ? 'bg-muted border-l-destructive/50 opacity-60' 
-                            : colorClass
-                        } border-opacity-50 flex flex-col min-h-[20px]`}
+                        className={`absolute left-0.5 right-0.5 p-1.5 border-l-4 rounded text-[10px] overflow-hidden z-10 opacity-30 border-dashed ${colorClass} flex flex-col min-h-[20px]`}
+                        title={`${event.solicitante} (Projeto ${event.projectId})`}
                       >
-                        <div className={`font-black truncate uppercase tracking-tighter leading-tight mb-0.5 ${isCancelled ? 'line-through text-muted-foreground' : ''}`}>
-                          {isCancelled && <span className="text-destructive mr-1">✕</span>}
+                        <div className="font-black truncate uppercase tracking-tighter leading-tight mb-0.5 flex items-center gap-1">
+                          <span className="text-xs">👻</span>
                           {event.solicitante}
                         </div>
                         {height > 30 && (
-                          <div className={`font-bold truncate opacity-80 italic leading-none ${isCancelled ? 'line-through' : ''}`}>
-                            {event.local}
+                          <div className="font-bold truncate opacity-80 italic leading-none">
+                            Proj. {event.projectId}
                           </div>
                         )}
                         <div className="mt-auto font-black bg-card/40 px-1 inline-block rounded self-start border border-foreground/5 text-[9px]">
@@ -177,8 +237,56 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({ events, startDate, o
                       </div>
                     );
                   })}
-              </div>
-            ))}
+
+                  {/* Current project events */}
+                  {events
+                    .filter(e => e.start.toDateString() === day.toDateString())
+                    .map(event => {
+                      const startHour = event.start.getHours();
+                      const startMin = event.start.getMinutes();
+                      const top = ((startHour - 8) * 80) + (startMin * 80 / 60);
+                      const durationMinutes = (event.end.getTime() - event.start.getTime()) / (1000 * 60);
+                      const height = (durationMinutes * 80 / 60);
+                      const colorClass = getEquipmentColor(event.equipmentType);
+                      const isCancelled = event.isCancelled;
+                      const hasOverlap = hasOverlapInOtherProject(event);
+                      const overlappingEvents = hasOverlap ? getOverlappingOtherEvents(event) : [];
+
+                      return (
+                        <div
+                          key={event.id}
+                          onClick={() => onEventClick(event)}
+                          style={{ top: `${top}px`, height: `${Math.max(height, 20)}px` }}
+                          className={`absolute left-0.5 right-0.5 p-1.5 border-l-4 rounded shadow-sm text-[10px] cursor-pointer hover:brightness-95 transition-all overflow-hidden z-20 ${
+                            isCancelled 
+                              ? 'bg-muted border-l-destructive/50 opacity-60' 
+                              : colorClass
+                          } ${hasOverlap ? 'ring-2 ring-amber-500 ring-offset-1' : ''} border-opacity-50 flex flex-col min-h-[20px]`}
+                          title={hasOverlap ? `Também agendado em: Proj. ${overlappingEvents.map(e => e.projectId).join(', ')}` : undefined}
+                        >
+                          {hasOverlap && (
+                            <div className="absolute -top-1 -right-1 bg-amber-500 rounded-full p-0.5" title={`Também em Proj. ${overlappingEvents.map(e => e.projectId).join(', ')}`}>
+                              <Layers className="w-3 h-3 text-white" />
+                            </div>
+                          )}
+                          <div className={`font-black truncate uppercase tracking-tighter leading-tight mb-0.5 ${isCancelled ? 'line-through text-muted-foreground' : ''}`}>
+                            {isCancelled && <span className="text-destructive mr-1">✕</span>}
+                            {event.solicitante}
+                          </div>
+                          {height > 30 && (
+                            <div className={`font-bold truncate opacity-80 italic leading-none ${isCancelled ? 'line-through' : ''}`}>
+                              {event.local}
+                            </div>
+                          )}
+                          <div className="mt-auto font-black bg-card/40 px-1 inline-block rounded self-start border border-foreground/5 text-[9px]">
+                            {event.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
