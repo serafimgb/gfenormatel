@@ -9,6 +9,7 @@ import { BookingEvent, Filters, ViewType, EquipmentType, Project } from '../type
 import { Plus, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useBookings, useCreateBooking, useCheckConflict, useCancelBooking } from '@/hooks/useBookings';
+import { useOtherProjectBookings } from '@/hooks/useOtherProjectBookings';
 import { useProjects } from '@/hooks/useProjects';
 import { useEquipmentTypes } from '@/hooks/useEquipmentTypes';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,6 +34,7 @@ const Index: React.FC = () => {
   }, [projects]);
 
   const { data: allEvents = [], isLoading } = useBookings(selectedProject.id);
+  const { data: otherProjectEvents = [] } = useOtherProjectBookings(selectedProject.id);
   const createBooking = useCreateBooking();
   const checkConflict = useCheckConflict();
   const cancelBooking = useCancelBooking();
@@ -116,8 +118,17 @@ const Index: React.FC = () => {
     });
   }, [allEvents, filters]);
 
-  const handleSaveEvent = async (newEvent: BookingEvent) => {
+  // Filter other project events by equipment type too
+  const filteredOtherProjectEvents = useMemo(() => {
+    return otherProjectEvents.filter(e => {
+      const matchesEquipmentType = !filters.equipmentType || e.equipmentType === filters.equipmentType;
+      return matchesEquipmentType;
+    });
+  }, [otherProjectEvents, filters]);
+
+  const handleSaveEvent = async (newEvent: BookingEvent, bookBothProjects?: boolean) => {
     try {
+      // Check conflict for current project
       const hasConflict = await checkConflict(
         newEvent.pemtId,
         newEvent.equipmentType,
@@ -129,17 +140,58 @@ const Index: React.FC = () => {
       if (hasConflict) {
         toast({
           title: "Conflito operacional!",
-          description: "Este equipamento já está ocupado neste horário.",
+          description: "Este equipamento já está ocupado neste horário no projeto atual.",
           variant: "destructive"
         });
         return;
       }
 
+      // If booking both projects, check conflicts in other projects too
+      if (bookBothProjects) {
+        const otherProjects = projects.filter(p => p.id !== newEvent.projectId);
+        
+        for (const otherProject of otherProjects) {
+          const hasOtherConflict = await checkConflict(
+            newEvent.pemtId,
+            newEvent.equipmentType,
+            otherProject.id,
+            newEvent.start,
+            newEvent.end
+          );
+
+          if (hasOtherConflict) {
+            toast({
+              title: "Conflito operacional!",
+              description: `Este equipamento já está ocupado neste horário no ${otherProject.name}.`,
+              variant: "destructive"
+            });
+            return;
+          }
+        }
+      }
+
+      // Create booking in current project
       await createBooking.mutateAsync(newEvent);
+
+      // If booking both projects, create in other projects too
+      if (bookBothProjects) {
+        const otherProjects = projects.filter(p => p.id !== newEvent.projectId);
+        
+        for (const otherProject of otherProjects) {
+          const otherEvent: BookingEvent = {
+            ...newEvent,
+            id: Math.random().toString(36).substr(2, 9),
+            projectId: otherProject.id
+          };
+          await createBooking.mutateAsync(otherEvent);
+        }
+      }
       
       toast({
         title: "Agendamento criado!",
-        description: `Reserva para ${newEvent.solicitante} criada com sucesso.`,
+        description: bookBothProjects 
+          ? `Reserva para ${newEvent.solicitante} criada em todos os projetos.`
+          : `Reserva para ${newEvent.solicitante} criada com sucesso.`,
       });
     } catch (error) {
       toast({
@@ -283,6 +335,8 @@ const Index: React.FC = () => {
                 onEventClick={setSelectedEvent}
                 viewType={viewType}
                 equipmentTypes={equipmentTypes}
+                otherProjectEvents={filteredOtherProjectEvents}
+                currentProjectId={selectedProject.id}
               />
             )}
           </div>
@@ -307,6 +361,7 @@ const Index: React.FC = () => {
           selectedEquipmentType={selectedEquipmentType}
           equipmentTypes={equipmentTypes}
           initialDate={currentDate}
+          allProjects={projects}
         />
       )}
 
