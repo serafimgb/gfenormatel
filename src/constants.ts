@@ -14,6 +14,7 @@ export const DEFAULT_EQUIPMENT_TYPES: EquipmentType[] = [
   { id: 'CAMINHAO_COMPACTADOR', name: 'Caminhão Compactador', color: '#9B59B6', icon: 'truck' },
   { id: 'TRATOR', name: 'Trator', color: '#3498DB', icon: 'tractor' },
   { id: 'CAMINHAO_MUNCK', name: 'Caminhão Munck', color: '#E74C3C', icon: 'truck' },
+  { id: 'CAMINHAO_CESTO', name: 'Caminhão Cesto', color: '#1ABC9C', icon: 'truck' },
 ];
 
 // Default projects - will be fetched from database
@@ -46,5 +47,6 @@ export const EQUIPMENT_COLORS: Record<string, string> = {
   'CAMINHAO_COMPACTADOR': 'bg-purple-500/20 border-l-purple-500 text-purple-900 dark:text-purple-100',
   'TRATOR': 'bg-blue-500/20 border-l-blue-500 text-blue-900 dark:text-blue-100',
   'CAMINHAO_MUNCK': 'bg-red-500/20 border-l-red-500 text-red-900 dark:text-red-100',
+  'CAMINHAO_CESTO': 'bg-teal-500/20 border-l-teal-500 text-teal-900 dark:text-teal-100',
   'DEFAULT': 'bg-muted border-l-muted-foreground text-foreground',
 };

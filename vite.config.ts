@@ -29,9 +29,9 @@ export default defineConfig(({ mode }) => ({
       ],
       manifest: {
         id: "/",
-        name: "PEMT NORMATEL - 743",
-        short_name: "PEMT 743",
-        description: "Sistema de gestão de agendamentos PEMT",
+        name: "GFE - NORMATEL",
+        short_name: "GFE",
+        description: "Gestão de Frota Especial - Normatel",
         theme_color: "#1e3a5f",
         background_color: "#0f172a",
         display: "standalone",
