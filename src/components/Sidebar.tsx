@@ -2,7 +2,6 @@ import React from 'react';
 import { BookingEvent, EquipmentType } from '../types';
 import { MapPin, Clock, Info, X, Ban, AlertTriangle, Truck } from 'lucide-react';
 import { Button } from './ui/button';
-import { InstallAppButton } from './InstallAppButton';
 
 interface SidebarProps {
   selectedEvent: BookingEvent | null;
@@ -170,15 +169,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsi
           </div>
         </div>
 
-        {/* Install App Button */}
-        <div className="pt-4 border-t border-border">
-          <div className="text-center">
-            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-3">
-              Instale o aplicativo
-            </p>
-            <InstallAppButton />
-          </div>
-        </div>
       </div>
     </div>
   );
