@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { InstallAppButton } from './InstallAppButton';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -32,7 +33,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
         
         <div className="flex items-center">
-          {/* Header clean */}
+          <InstallAppButton />
         </div>
       </header>
       <main className="flex-1 overflow-hidden relative">
