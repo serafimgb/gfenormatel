@@ -15,6 +15,9 @@ export const DEFAULT_EQUIPMENT_TYPES: EquipmentType[] = [
   { id: 'TRATOR', name: 'Trator', color: '#3498DB', icon: 'tractor' },
   { id: 'CAMINHAO_MUNCK', name: 'Caminhão Munck', color: '#E74C3C', icon: 'truck' },
   { id: 'CAMINHAO_CESTO', name: 'Caminhão Cesto', color: '#1ABC9C', icon: 'truck' },
+  { id: 'BONGO', name: 'Bongo', color: '#F39C12', icon: 'truck' },
+  { id: 'TRATOR_ARTICULADO', name: 'Trator Articulado', color: '#8E44AD', icon: 'tractor' },
+  { id: 'TRATOR_ARRASTO', name: 'Trator de Arrasto', color: '#2980B9', icon: 'tractor' },
 ];
 
 // Default projects - will be fetched from database
@@ -48,5 +51,8 @@ export const EQUIPMENT_COLORS: Record<string, string> = {
   'TRATOR': 'bg-blue-500/20 border-l-blue-500 text-blue-900 dark:text-blue-100',
   'CAMINHAO_MUNCK': 'bg-red-500/20 border-l-red-500 text-red-900 dark:text-red-100',
   'CAMINHAO_CESTO': 'bg-teal-500/20 border-l-teal-500 text-teal-900 dark:text-teal-100',
+  'BONGO': 'bg-amber-500/20 border-l-amber-500 text-amber-900 dark:text-amber-100',
+  'TRATOR_ARTICULADO': 'bg-violet-500/20 border-l-violet-500 text-violet-900 dark:text-violet-100',
+  'TRATOR_ARRASTO': 'bg-sky-500/20 border-l-sky-500 text-sky-900 dark:text-sky-100',
   'DEFAULT': 'bg-muted border-l-muted-foreground text-foreground',
 };
