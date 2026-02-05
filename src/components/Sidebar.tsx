@@ -1,6 +1,6 @@
 import React from 'react';
 import { BookingEvent, EquipmentType } from '../types';
-import { MapPin, Clock, Info, X, Ban, AlertTriangle, Truck } from 'lucide-react';
+import { MapPin, Clock, Info, X, Ban, AlertTriangle, Truck, Calendar } from 'lucide-react';
 import { Button } from './ui/button';
 
 interface SidebarProps {
@@ -10,9 +10,10 @@ interface SidebarProps {
   loadingInsights: boolean;
   onCancelClick?: () => void;
   equipmentTypes?: EquipmentType[];
+  currentDate?: Date;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsights, loadingInsights, onCancelClick, equipmentTypes = [] }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsights, loadingInsights, onCancelClick, equipmentTypes = [], currentDate }) => {
   const getEquipmentName = (equipmentTypeId: string) => {
     const equipment = equipmentTypes.find(eq => eq.id === equipmentTypeId);
     return equipment?.name || equipmentTypeId;
@@ -42,6 +43,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsi
       <div className="flex-1 overflow-y-auto p-5 space-y-6 bg-card no-scrollbar">
         {selectedEvent ? (
           <div className="space-y-5 animate-slide-in-from-right">
+            {/* Display selected event date */}
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-normatel-light/10 border border-normatel-light/30">
+              <Calendar className="w-5 h-5 text-normatel-dark" strokeWidth={2.5} />
+              <span className="font-black text-sm text-normatel-dark uppercase">
+                {selectedEvent.start.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              </span>
+            </div>
+
             {selectedEvent.isCancelled && (
               <div className="bg-destructive/10 border-2 border-destructive/30 p-4 rounded-xl">
                 <div className="flex items-center gap-2 text-destructive font-black text-xs uppercase mb-2">
@@ -145,7 +154,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsi
             )}
           </div>
         ) : (
-          <div className="text-center py-20 px-8">
+          <div className="text-center py-10 px-8">
+            {/* Display current calendar date when no event selected */}
+            {currentDate && (
+              <div className="mb-8 p-4 rounded-xl bg-normatel-light/10 border border-normatel-light/30">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Calendar className="w-5 h-5 text-normatel-dark" strokeWidth={2.5} />
+                  <span className="font-black text-xs text-normatel-dark uppercase tracking-wider">
+                    Data Exibida
+                  </span>
+                </div>
+                <span className="font-black text-lg text-normatel-dark block">
+                  {currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+                </span>
+              </div>
+            )}
+            
             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-5 border border-border shadow-inner">
               <Info className="w-8 h-8 text-muted-foreground/50" />
             </div>
