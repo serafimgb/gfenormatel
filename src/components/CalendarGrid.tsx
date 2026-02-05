@@ -12,6 +12,7 @@ interface CalendarGridProps {
   equipmentTypes?: EquipmentType[];
   otherProjectEvents?: BookingEvent[];
   currentProjectId?: string;
+  selectedEventId?: string;
 }
 
 export const CalendarGrid: React.FC<CalendarGridProps> = ({ 
@@ -21,7 +22,8 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   viewType, 
   equipmentTypes = [],
   otherProjectEvents = [],
-  currentProjectId
+  currentProjectId,
+  selectedEventId
 }) => {
   const getEquipmentColor = (equipmentType: string) => {
     return EQUIPMENT_COLORS[equipmentType] || EQUIPMENT_COLORS.DEFAULT;
@@ -110,15 +112,16 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                         .slice(0, 3 - dayGhostEvents.slice(0, 2).length)
                         .map(event => {
                           const hasOverlap = hasOverlapInOtherProject(event);
+                            const isSelected = event.id === selectedEventId;
                           return (
                             <div 
                               key={event.id}
                               onClick={() => onEventClick(event)}
-                              className={`text-[9px] font-black p-1 rounded truncate cursor-pointer border-l-2 shadow-sm relative ${
+                                className={`text-[9px] font-black p-1 rounded truncate cursor-pointer border-l-2 shadow-sm relative transition-all ${
                                 event.isCancelled 
                                   ? 'bg-muted text-muted-foreground line-through opacity-60 border-l-destructive/50' 
                                   : getEquipmentColor(event.equipmentType)
-                              } ${hasOverlap ? 'ring-2 ring-amber-500 ring-offset-1' : ''}`}
+                                } ${hasOverlap ? 'ring-2 ring-amber-500 ring-offset-1' : ''} ${isSelected ? 'ring-2 ring-primary ring-offset-2 ring-offset-background scale-105 z-30' : ''}`}
                             >
                               {hasOverlap && (
                                 <Layers className="w-3 h-3 absolute -top-1 -right-1 text-amber-500 bg-card rounded-full p-0.5" />
@@ -251,17 +254,18 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                       const isCancelled = event.isCancelled;
                       const hasOverlap = hasOverlapInOtherProject(event);
                       const overlappingEvents = hasOverlap ? getOverlappingOtherEvents(event) : [];
+                      const isSelected = event.id === selectedEventId;
 
                       return (
                         <div
                           key={event.id}
                           onClick={() => onEventClick(event)}
                           style={{ top: `${top}px`, height: `${Math.max(height, 20)}px` }}
-                          className={`absolute left-0.5 right-0.5 p-1.5 border-l-4 rounded shadow-sm text-[10px] cursor-pointer hover:brightness-95 transition-all overflow-hidden z-20 ${
+                          className={`absolute left-0.5 right-0.5 p-1.5 border-l-4 rounded shadow-sm text-[10px] cursor-pointer hover:brightness-95 transition-all overflow-hidden ${
                             isCancelled 
                               ? 'bg-muted border-l-destructive/50 opacity-60' 
                               : colorClass
-                          } ${hasOverlap ? 'ring-2 ring-amber-500 ring-offset-1' : ''} border-opacity-50 flex flex-col min-h-[20px]`}
+                          } ${hasOverlap ? 'ring-2 ring-amber-500 ring-offset-1' : ''} ${isSelected ? 'ring-2 ring-primary ring-offset-2 ring-offset-background scale-[1.02] z-50 shadow-xl' : 'z-20'} border-opacity-50 flex flex-col min-h-[20px]`}
                           title={hasOverlap ? `Também agendado em: Proj. ${overlappingEvents.map(e => e.projectId).join(', ')}` : undefined}
                         >
                           {hasOverlap && (

@@ -337,6 +337,7 @@ const Index: React.FC = () => {
                 equipmentTypes={equipmentTypes}
                 otherProjectEvents={filteredOtherProjectEvents}
                 currentProjectId={selectedProject.id}
+                selectedEventId={selectedEvent?.id}
               />
             )}
           </div>
