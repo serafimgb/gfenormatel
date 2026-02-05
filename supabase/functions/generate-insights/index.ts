@@ -21,19 +21,44 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { pemtId, selectedEvent } = await req.json();
+    const { projectId, equipmentType, selectedEvent } = await req.json();
 
-    // Fetch recent bookings for the selected PEMT
-    const { data: bookings, error } = await supabase
+    // Build context for the query
+    let query = supabase
       .from('bookings')
       .select('*')
-      .eq('pemt_id', pemtId)
       .order('start_time', { ascending: false })
       .limit(50);
+
+    // Filter by project if provided
+    if (projectId) {
+      query = query.eq('project_id', projectId);
+    }
+
+    // Filter by equipment type if provided
+    if (equipmentType) {
+      query = query.eq('equipment_type', equipmentType);
+    }
+
+    // Fetch recent bookings for the selected PEMT
+    const { data: bookings, error } = await query;
 
     if (error) {
       console.error('Error fetching bookings:', error);
       throw error;
+    }
+
+    // Get equipment type name for better context
+    let equipmentTypeName = 'Todos os Equipamentos';
+    if (equipmentType) {
+      const { data: eqData } = await supabase
+        .from('equipment_types')
+        .select('name')
+        .eq('id', equipmentType)
+        .single();
+      if (eqData) {
+        equipmentTypeName = eqData.name;
+      }
     }
 
     // Build context for AI
@@ -62,14 +87,14 @@ serve(async (req) => {
       ? `\n\nEVENTO SELECIONADO:\n- Solicitante: ${selectedEvent.solicitante}\n- Local: ${selectedEvent.local}\n- Carteira: ${selectedEvent.carteira}\n- Serviço: ${selectedEvent.servicoTipo}\n- Duração: ${selectedEvent.tempoServicoHoras}h`
       : '';
 
-    const systemPrompt = `Você é um analista de operações da Normatel especializado em gestão de PEMTs (Plataformas Elevatórias Móveis de Trabalho). 
-Analise os dados de agendamento e forneça insights acionáveis.
+    const systemPrompt = `Você é um analista de operações da Normatel especializado em gestão de equipamentos (PEMT, Caminhão Munck, Caminhão Cesto, Retroescavadeira, Trator, Bongo, etc.). 
+Analise os dados de agendamento e forneça insights acionáveis para o equipamento específico ou visão geral.
 
 Seja CONCISO e DIRETO. Use bullet points. Máximo 4-5 linhas.
 Foque em: padrões de uso, otimizações, alertas importantes.
 Use emojis para destacar pontos importantes.`;
 
-    const userPrompt = `Analise os dados desta PEMT (${pemtId}):
+    const userPrompt = `Analise os dados de agendamento - Projeto ${projectId || 'Todos'} - Equipamento: ${equipmentTypeName}:
 
 RESUMO:
 - Total de agendamentos: ${bookings?.length || 0}
