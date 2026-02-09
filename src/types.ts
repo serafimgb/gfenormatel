@@ -30,6 +30,7 @@ export interface BookingEvent {
   start: Date;
   end: Date;
   tempoServicoHoras: number;
+  numeroOm: string;
   descricao?: string;
   isCancelled?: boolean;
   cancelledAt?: Date;

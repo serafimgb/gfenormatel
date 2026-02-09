@@ -35,6 +35,16 @@ export const CARTEIRA_OPTIONS = [
   'Automação'
 ];
 
+// Responsáveis por carteira (e-mails para notificação)
+export const CARTEIRA_RESPONSAVEIS: Record<string, string[]> = {
+  'Civil': ['responsavel.civil@normatel.com.br'],
+  'Elétrica': ['responsavel.eletrica@normatel.com.br'],
+  'Mecânica': ['responsavel.mecanica@normatel.com.br'],
+  'Áreas Verdes': ['responsavel.areasverdes@normatel.com.br'],
+  'Conservação e Limpeza': ['responsavel.conservacao@normatel.com.br'],
+  'Automação': ['responsavel.automacao@normatel.com.br'],
+};
+
 export const SERVICE_COLORS: Record<string, string> = {
   'Civil': 'service-civil',
   'Elétrica': 'service-eletrica',

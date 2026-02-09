@@ -26,6 +26,7 @@ export type Database = {
           id: string
           is_cancelled: boolean
           local: string
+          numero_om: string | null
           pemt_id: string
           project_id: string
           servico_tipo: string
@@ -45,6 +46,7 @@ export type Database = {
           id?: string
           is_cancelled?: boolean
           local: string
+          numero_om?: string | null
           pemt_id: string
           project_id?: string
           servico_tipo: string
@@ -64,6 +66,7 @@ export type Database = {
           id?: string
           is_cancelled?: boolean
           local?: string
+          numero_om?: string | null
           pemt_id?: string
           project_id?: string
           servico_tipo?: string

@@ -40,6 +40,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     carteira: CARTEIRA_OPTIONS[0],
     local: '',
     motivo: '',
+    numeroOm: '',
     data: getLocalDateString(initialDate),
     horaInicio: '08:00',
     tempoServicoHoras: '1'
@@ -74,7 +75,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       servicoTipo: formData.motivo,
       start,
       end,
-      tempoServicoHoras: Number(formData.tempoServicoHoras)
+      tempoServicoHoras: Number(formData.tempoServicoHoras),
+      numeroOm: formData.numeroOm,
     };
 
     onSave(newEvent, bookBothProjects);
@@ -190,6 +192,19 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 value={formData.motivo} 
                 onChange={e => setFormData(prev => ({ ...prev, motivo: e.target.value }))} 
                 placeholder="Descreva a atividade..." 
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-normatel-dark uppercase mb-1 tracking-wider">
+                Número de OM
+              </label>
+              <input 
+                required 
+                className="w-full border-normatel-light/30 border-2 rounded-lg px-3 py-2 text-sm focus:border-normatel-light outline-none bg-card font-bold text-foreground" 
+                value={formData.numeroOm} 
+                onChange={e => setFormData(prev => ({ ...prev, numeroOm: e.target.value }))} 
+                placeholder="Ex: OM-2024-001" 
               />
             </div>
 

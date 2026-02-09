@@ -15,6 +15,7 @@ const mapToBookingEvent = (row: any): BookingEvent => ({
   start: new Date(row.start_time),
   end: new Date(row.end_time),
   tempoServicoHoras: Number(row.tempo_servico_horas),
+  numeroOm: row.numero_om || '',
   descricao: row.descricao,
   isCancelled: row.is_cancelled || false,
   cancelledAt: row.cancelled_at ? new Date(row.cancelled_at) : undefined,
