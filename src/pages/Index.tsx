@@ -13,7 +13,7 @@ import { useOtherProjectBookings } from '@/hooks/useOtherProjectBookings';
 import { useProjects } from '@/hooks/useProjects';
 import { useEquipmentTypes } from '@/hooks/useEquipmentTypes';
 import { supabase } from '@/integrations/supabase/client';
-import { DEFAULT_PROJECTS, DEFAULT_EQUIPMENT_TYPES, EQUIPMENT_COLORS } from '@/constants';
+import { DEFAULT_PROJECTS, DEFAULT_EQUIPMENT_TYPES, EQUIPMENT_COLORS, CARTEIRA_RESPONSAVEIS } from '@/constants';
 
 const Index: React.FC = () => {
   const { toast } = useToast();
@@ -172,6 +172,27 @@ const Index: React.FC = () => {
 
       // Create booking in current project
       await createBooking.mutateAsync(newEvent);
+
+      // Send email notification
+      const equipmentName = equipmentTypes.find(e => e.id === newEvent.equipmentType)?.name || newEvent.equipmentType;
+      const responsaveis = CARTEIRA_RESPONSAVEIS[newEvent.carteira] || [];
+      if (responsaveis.length > 0) {
+        supabase.functions.invoke('send-booking-notification', {
+          body: {
+            solicitante: newEvent.solicitante,
+            carteira: newEvent.carteira,
+            local: newEvent.local,
+            servicoTipo: newEvent.servicoTipo,
+            equipmentType: equipmentName,
+            numeroOm: newEvent.numeroOm,
+            start: newEvent.start.toISOString(),
+            end: newEvent.end.toISOString(),
+            tempoServicoHoras: newEvent.tempoServicoHoras,
+            projectName: selectedProject.name,
+            responsaveis,
+          }
+        }).catch(err => console.error('Erro ao enviar notificação:', err));
+      }
 
       // If booking both projects, create in other projects too
       if (bookBothProjects) {
