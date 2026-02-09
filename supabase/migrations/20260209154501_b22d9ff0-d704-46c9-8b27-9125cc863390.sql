@@ -1,0 +1,1 @@
+ALTER TABLE public.bookings ADD COLUMN numero_om text;

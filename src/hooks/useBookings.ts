@@ -15,6 +15,7 @@ const mapToBookingEvent = (row: any): BookingEvent => ({
   start: new Date(row.start_time),
   end: new Date(row.end_time),
   tempoServicoHoras: Number(row.tempo_servico_horas),
+  numeroOm: row.numero_om || '',
   descricao: row.descricao,
   isCancelled: row.is_cancelled || false,
   cancelledAt: row.cancelled_at ? new Date(row.cancelled_at) : undefined,
@@ -33,6 +34,7 @@ const mapToDBFormat = (event: BookingEvent) => ({
   start_time: event.start.toISOString(),
   end_time: event.end.toISOString(),
   tempo_servico_horas: event.tempoServicoHoras,
+  numero_om: event.numeroOm,
   descricao: event.descricao,
 });
 
