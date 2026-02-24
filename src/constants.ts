@@ -26,6 +26,10 @@ export const DEFAULT_PROJECTS: Project[] = [
   { id: '741', name: 'Projeto 741', description: 'Projeto 741' },
 ];
 
+// Equipamentos exclusivos - só existe 1 unidade para todos os projetos
+// Quando agendado em um projeto, bloqueia automaticamente em todos os outros
+export const EXCLUSIVE_EQUIPMENT_TYPES = ['CAMINHAO_MUNCK', 'RETROESCAVADEIRA'];
+
 export const CARTEIRA_OPTIONS = [
   'Civil', 
   'Elétrica', 
