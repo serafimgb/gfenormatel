@@ -111,15 +111,19 @@ export const useDeleteBooking = () => {
 };
 
 export const useCheckConflict = () => {
-  return async (pemtId: string, equipmentType: string, projectId: string, start: Date, end: Date, excludeId?: string): Promise<boolean> => {
+  return async (pemtId: string, equipmentType: string, projectId: string, start: Date, end: Date, excludeId?: string, isExclusive?: boolean): Promise<{ hasConflict: boolean; conflictProjectId?: string }> => {
     let query = supabase
       .from('bookings')
-      .select('id')
+      .select('id, project_id')
       .eq('equipment_type', equipmentType)
-      .eq('project_id', projectId)
       .eq('is_cancelled', false)
       .lt('start_time', end.toISOString())
       .gt('end_time', start.toISOString());
+
+    // For exclusive equipment, check ALL projects; otherwise only current project
+    if (!isExclusive) {
+      query = query.eq('project_id', projectId);
+    }
 
     if (excludeId) {
       query = query.neq('id', excludeId);
@@ -132,7 +136,11 @@ export const useCheckConflict = () => {
       throw error;
     }
 
-    return (data?.length || 0) > 0;
+    if ((data?.length || 0) > 0) {
+      const conflictProjectId = data?.[0]?.project_id;
+      return { hasConflict: true, conflictProjectId };
+    }
+    return { hasConflict: false };
   };
 };
 

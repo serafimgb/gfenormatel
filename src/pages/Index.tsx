@@ -13,7 +13,7 @@ import { useOtherProjectBookings } from '@/hooks/useOtherProjectBookings';
 import { useProjects } from '@/hooks/useProjects';
 import { useEquipmentTypes } from '@/hooks/useEquipmentTypes';
 import { supabase } from '@/integrations/supabase/client';
-import { DEFAULT_PROJECTS, DEFAULT_EQUIPMENT_TYPES, EQUIPMENT_COLORS } from '@/constants';
+import { DEFAULT_PROJECTS, DEFAULT_EQUIPMENT_TYPES, EQUIPMENT_COLORS, EXCLUSIVE_EQUIPMENT_TYPES } from '@/constants';
 
 const Index: React.FC = () => {
   const { toast } = useToast();
@@ -128,30 +128,38 @@ const Index: React.FC = () => {
 
   const handleSaveEvent = async (newEvent: BookingEvent, bookBothProjects?: boolean) => {
     try {
-      // Check conflict for current project
-      const hasConflict = await checkConflict(
+      const isExclusive = EXCLUSIVE_EQUIPMENT_TYPES.includes(newEvent.equipmentType);
+
+      // For exclusive equipment, check conflict across ALL projects
+      // For regular equipment, check only current project
+      const { hasConflict, conflictProjectId } = await checkConflict(
         newEvent.pemtId,
         newEvent.equipmentType,
         newEvent.projectId,
         newEvent.start,
-        newEvent.end
+        newEvent.end,
+        undefined,
+        isExclusive
       );
 
       if (hasConflict) {
+        const conflictProject = projects.find(p => p.id === conflictProjectId);
         toast({
           title: "Conflito operacional!",
-          description: "Este equipamento já está ocupado neste horário no projeto atual.",
+          description: isExclusive && conflictProjectId !== newEvent.projectId
+            ? `Este equipamento é exclusivo e já está reservado no ${conflictProject?.name || 'outro projeto'} neste horário.`
+            : "Este equipamento já está ocupado neste horário no projeto atual.",
           variant: "destructive"
         });
         return;
       }
 
-      // If booking both projects, check conflicts in other projects too
-      if (bookBothProjects) {
+      // If booking both projects (non-exclusive), check conflicts in other projects
+      if (bookBothProjects && !isExclusive) {
         const otherProjects = projects.filter(p => p.id !== newEvent.projectId);
         
         for (const otherProject of otherProjects) {
-          const hasOtherConflict = await checkConflict(
+          const { hasConflict: hasOtherConflict } = await checkConflict(
             newEvent.pemtId,
             newEvent.equipmentType,
             otherProject.id,
