@@ -128,6 +128,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsi
                   {selectedEvent.tempoServicoHoras} Horas
                 </div>
               </div>
+
+              {selectedEvent.numeroOm && (
+                <div className="bg-card p-3 rounded-xl border-2 border-border shadow-sm flex items-center justify-between">
+                  <label className="text-[9px] font-black text-muted-foreground uppercase block">
+                    Número de OM
+                  </label>
+                  <div className="text-lg font-black text-normatel-dark">
+                    {selectedEvent.numeroOm}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="pt-1">
