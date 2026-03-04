@@ -1,7 +1,7 @@
-import React from "react";
-import { BookingEvent, EquipmentType } from "../types";
-import { MapPin, Clock, Info, X, Ban, AlertTriangle, Truck, Calendar } from "lucide-react";
-import { Button } from "./ui/button";
+import React from 'react';
+import { BookingEvent, EquipmentType } from '../types';
+import { MapPin, Clock, Info, X, Ban, AlertTriangle, Truck, Calendar } from 'lucide-react';
+import { Button } from './ui/button';
 
 interface SidebarProps {
   selectedEvent: BookingEvent | null;
@@ -13,34 +13,29 @@ interface SidebarProps {
   currentDate?: Date;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({
-  selectedEvent,
-  onClose,
-  aiInsights,
-  loadingInsights,
-  onCancelClick,
-  equipmentTypes = [],
-  currentDate,
-}) => {
+export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsights, loadingInsights, onCancelClick, equipmentTypes = [], currentDate }) => {
   const getEquipmentName = (equipmentTypeId: string) => {
-    const equipment = equipmentTypes.find((eq) => eq.id === equipmentTypeId);
+    const equipment = equipmentTypes.find(eq => eq.id === equipmentTypeId);
     return equipment?.name || equipmentTypeId;
   };
 
   const getEquipmentColor = (equipmentTypeId: string) => {
-    const equipment = equipmentTypes.find((eq) => eq.id === equipmentTypeId);
-    return equipment?.color || "#6b7280";
+    const equipment = equipmentTypes.find(eq => eq.id === equipmentTypeId);
+    return equipment?.color || '#6b7280';
   };
 
   return (
-    <div
-      className={`fixed inset-y-0 right-0 w-80 bg-card border-l border-border shadow-2xl transition-transform duration-300 z-30 flex flex-col lg:relative lg:translate-x-0 ${
-        selectedEvent ? "translate-x-0" : "translate-x-full"
-      }`}
-    >
+    <div className={`fixed inset-y-0 right-0 w-80 bg-card border-l border-border shadow-2xl transition-transform duration-300 z-30 flex flex-col lg:relative lg:translate-x-0 ${
+      selectedEvent ? 'translate-x-0' : 'translate-x-full'
+    }`}>
       <div className="p-4 border-b border-border flex justify-between items-center bg-muted shrink-0">
-        <h2 className="font-black text-[10px] uppercase tracking-widest text-normatel-dark">DETALHES DA RESERVA</h2>
-        <button onClick={onClose} className="p-1.5 hover:bg-secondary rounded-full transition-colors text-foreground">
+        <h2 className="font-black text-[10px] uppercase tracking-widest text-normatel-dark">
+          DETALHES DA RESERVA
+        </h2>
+        <button 
+          onClick={onClose} 
+          className="p-1.5 hover:bg-secondary rounded-full transition-colors text-foreground"
+        >
           <X className="w-5 h-5" strokeWidth={2.5} />
         </button>
       </div>
@@ -52,12 +47,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="flex items-center gap-2 p-3 rounded-xl bg-normatel-light/10 border border-normatel-light/30">
               <Calendar className="w-5 h-5 text-normatel-dark" strokeWidth={2.5} />
               <span className="font-black text-sm text-normatel-dark uppercase">
-                {selectedEvent.start.toLocaleDateString("pt-BR", {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
+                {selectedEvent.start.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               </span>
             </div>
 
@@ -72,19 +62,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </p>
                 {selectedEvent.cancelledAt && (
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    Cancelado em: {selectedEvent.cancelledAt.toLocaleDateString("pt-BR")} às{" "}
-                    {selectedEvent.cancelledAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    Cancelado em: {selectedEvent.cancelledAt.toLocaleDateString('pt-BR')} às {selectedEvent.cancelledAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                   </p>
                 )}
               </div>
             )}
 
             {/* Equipment Type Badge */}
-            <div
+            <div 
               className="flex items-center gap-2 p-3 rounded-xl border-2"
-              style={{
+              style={{ 
                 backgroundColor: `${getEquipmentColor(selectedEvent.equipmentType)}20`,
-                borderColor: `${getEquipmentColor(selectedEvent.equipmentType)}40`,
+                borderColor: `${getEquipmentColor(selectedEvent.equipmentType)}40`
               }}
             >
               <Truck className="w-5 h-5" style={{ color: getEquipmentColor(selectedEvent.equipmentType) }} />
@@ -97,13 +86,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-1 block">
                 Responsável
               </label>
-              <div
-                className={`text-xl font-black leading-tight ${selectedEvent.isCancelled ? "text-muted-foreground line-through" : "text-normatel-dark"}`}
-              >
+              <div className={`text-xl font-black leading-tight ${selectedEvent.isCancelled ? 'text-muted-foreground line-through' : 'text-normatel-dark'}`}>
                 {selectedEvent.solicitante}
               </div>
             </div>
-
+             
             <div className="space-y-4">
               <div className="bg-card p-4 rounded-xl border-2 border-normatel-light/20 shadow-sm">
                 <div className="flex items-start space-x-3">
@@ -114,7 +101,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <label className="text-[9px] font-black text-normatel-dark uppercase mb-1 block">
                       Unidade / Setor
                     </label>
-                    <div className="text-sm font-black text-foreground leading-snug">{selectedEvent.local}</div>
+                    <div className="text-sm font-black text-foreground leading-snug">
+                      {selectedEvent.local}
+                    </div>
                     <div className="text-[11px] text-normatel-dark font-black mt-1 bg-normatel-light/10 px-2 py-0.5 rounded inline-block border border-normatel-light/20">
                       {selectedEvent.carteira}
                     </div>
@@ -132,14 +121,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
 
               <div className="bg-card p-3 rounded-xl border-2 border-border shadow-sm flex items-center justify-between">
-                <label className="text-[9px] font-black text-muted-foreground uppercase block">Tempo de Uso</label>
-                <div className="text-lg font-black text-normatel-dark">{selectedEvent.tempoServicoHoras} Horas</div>
+                <label className="text-[9px] font-black text-muted-foreground uppercase block">
+                  Tempo de Uso
+                </label>
+                <div className="text-lg font-black text-normatel-dark">
+                  {selectedEvent.tempoServicoHoras} Horas
+                </div>
               </div>
 
               {selectedEvent.numeroOm && (
-                <div className="bg-card p-3 rounded-xl border border-border">
-                  <label className="text-[9px] font-black text-muted-foreground uppercase block">Número de OM</label>
-                  <div className="text-lg font-black text-normatel-dark">{selectedEvent.numeroOm}</div>
+                <div className="bg-card p-3 rounded-xl border-2 border-border shadow-sm flex items-center justify-between">
+                  <label className="text-[9px] font-black text-muted-foreground uppercase block">
+                    Número de OM
+                  </label>
+                  <div className="text-lg font-black text-normatel-dark">
+                    {selectedEvent.numeroOm}
+                  </div>
                 </div>
               )}
             </div>
@@ -150,14 +147,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </label>
               <div className="flex items-center text-base font-black text-normatel-dark mt-2 bg-normatel-light/5 p-3 rounded-xl border border-normatel-light/20">
                 <Clock className="w-4 h-4 mr-2.5 text-normatel-light" strokeWidth={2.5} />
-                {selectedEvent.start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} —{" "}
-                {selectedEvent.end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                {selectedEvent.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} — {selectedEvent.end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
               </div>
             </div>
 
             {!selectedEvent.isCancelled && onCancelClick && (
               <div className="pt-4">
-                <Button
+                <Button 
                   variant="outline"
                   onClick={onCancelClick}
                   className="w-full border-destructive/50 text-destructive hover:bg-destructive/10 font-black uppercase tracking-tighter text-xs"
@@ -175,14 +171,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="mb-8 p-4 rounded-xl bg-normatel-light/10 border border-normatel-light/30">
                 <div className="flex items-center justify-center gap-2 mb-2">
                   <Calendar className="w-5 h-5 text-normatel-dark" strokeWidth={2.5} />
-                  <span className="font-black text-xs text-normatel-dark uppercase tracking-wider">Data Exibida</span>
+                  <span className="font-black text-xs text-normatel-dark uppercase tracking-wider">
+                    Data Exibida
+                  </span>
                 </div>
                 <span className="font-black text-lg text-normatel-dark block">
-                  {currentDate.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
+                  {currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
                 </span>
               </div>
             )}
-
+            
             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-5 border border-border shadow-inner">
               <Info className="w-8 h-8 text-muted-foreground/50" />
             </div>
@@ -195,16 +193,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="pt-8 mt-4 border-t border-border pb-10">
           <div className="flex items-center mb-4 space-x-2">
             <div className="w-2 h-2 rounded-full bg-normatel-light animate-pulse-dot" />
-            <h3 className="text-[10px] font-black text-normatel-dark uppercase tracking-[0.2em]">NORA HUB</h3>
+            <h3 className="text-[10px] font-black text-normatel-dark uppercase tracking-[0.2em]">
+              NORA HUB
+            </h3>
           </div>
-          <div
-            className={`p-4 rounded-2xl bg-foreground text-background text-[12px] font-medium leading-relaxed shadow-xl relative border border-background/10 whitespace-pre-wrap ${
-              loadingInsights ? "animate-pulse opacity-80" : ""
-            }`}
-          >
-            {loadingInsights ? "Processando dados..." : aiInsights}
+          <div className={`p-4 rounded-2xl bg-foreground text-background text-[12px] font-medium leading-relaxed shadow-xl relative border border-background/10 whitespace-pre-wrap ${
+            loadingInsights ? 'animate-pulse opacity-80' : ''
+          }`}>
+            {loadingInsights ? 'Processando dados...' : aiInsights}
           </div>
         </div>
+
       </div>
     </div>
   );
