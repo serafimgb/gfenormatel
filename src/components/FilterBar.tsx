@@ -57,7 +57,6 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         </span>
       </div>
 
-      </div>
 
       {/* Filters */}
       <div className="flex flex-1 items-center gap-3 flex-wrap">
