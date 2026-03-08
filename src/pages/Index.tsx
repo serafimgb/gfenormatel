@@ -214,7 +214,7 @@ const Index: React.FC = () => {
     if (!selectedEvent) return;
     
     try {
-      await cancelBooking.mutateAsync({ id: selectedEvent.id, reason });
+      await cancelBooking.mutateAsync({ id: selectedEvent.id, reason, cancelledBy });
       
       toast({
         title: "Agendamento cancelado",

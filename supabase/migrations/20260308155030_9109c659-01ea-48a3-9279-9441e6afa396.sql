@@ -1,0 +1,1 @@
+ALTER TABLE public.bookings ADD COLUMN cancelled_by text DEFAULT NULL;
