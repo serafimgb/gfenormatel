@@ -14,6 +14,7 @@ import { useProjects } from '@/hooks/useProjects';
 import { useEquipmentTypes } from '@/hooks/useEquipmentTypes';
 import { supabase } from '@/integrations/supabase/client';
 import { DEFAULT_PROJECTS, DEFAULT_EQUIPMENT_TYPES, EQUIPMENT_COLORS, EXCLUSIVE_EQUIPMENT_TYPES } from '@/constants';
+import { sendBookingNotification } from '@/hooks/useBookingNotifications';
 
 const Index: React.FC = () => {
   const { toast } = useToast();
