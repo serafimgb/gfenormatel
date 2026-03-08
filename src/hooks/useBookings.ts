@@ -20,6 +20,7 @@ const mapToBookingEvent = (row: any): BookingEvent => ({
   isCancelled: row.is_cancelled || false,
   cancelledAt: row.cancelled_at ? new Date(row.cancelled_at) : undefined,
   cancellationReason: row.cancellation_reason,
+  cancelledBy: row.cancelled_by,
 });
 
 // Convert BookingEvent to database format
