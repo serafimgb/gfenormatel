@@ -57,28 +57,6 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         </span>
       </div>
 
-      {/* View Switcher */}
-      <div className="flex bg-muted p-1 rounded-xl border border-border mr-4">
-        <button 
-          onClick={() => setViewType(ViewType.Week)}
-          className={`px-4 py-1.5 text-xs font-black uppercase rounded-lg transition-all ${
-            viewType === ViewType.Week 
-              ? 'bg-card text-normatel-dark shadow-md' 
-              : 'text-muted-foreground'
-          }`}
-        >
-          Semana
-        </button>
-        <button 
-          onClick={() => setViewType(ViewType.Month)}
-          className={`px-4 py-1.5 text-xs font-black uppercase rounded-lg transition-all ${
-            viewType === ViewType.Month 
-              ? 'bg-card text-normatel-dark shadow-md' 
-              : 'text-muted-foreground'
-          }`}
-        >
-          Mês
-        </button>
       </div>
 
       {/* Filters */}

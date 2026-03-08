@@ -310,14 +310,12 @@ const Index: React.FC = () => {
           setViewType={setViewType}
           onPrev={() => {
             const d = new Date(currentDate);
-            if (viewType === ViewType.Week) d.setDate(d.getDate() - 7);
-            else d.setMonth(d.getMonth() - 1);
+            d.setMonth(d.getMonth() - 1);
             setCurrentDate(d);
           }}
           onNext={() => {
             const d = new Date(currentDate);
-            if (viewType === ViewType.Week) d.setDate(d.getDate() + 7);
-            else d.setMonth(d.getMonth() + 1);
+            d.setMonth(d.getMonth() + 1);
             setCurrentDate(d);
           }}
           onToday={() => setCurrentDate(new Date())}

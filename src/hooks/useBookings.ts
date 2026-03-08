@@ -148,13 +148,14 @@ export const useCancelBooking = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
+    mutationFn: async ({ id, reason, cancelledBy }: { id: string; reason: string; cancelledBy: string }) => {
       const { error } = await supabase
         .from('bookings')
         .update({
           is_cancelled: true,
           cancelled_at: new Date().toISOString(),
           cancellation_reason: reason,
+          cancelled_by: cancelledBy,
         })
         .eq('id', id);
 
