@@ -210,7 +210,7 @@ const Index: React.FC = () => {
     }
   };
 
-  const handleCancelBooking = async (reason: string) => {
+  const handleCancelBooking = async (reason: string, cancelledBy: string) => {
     if (!selectedEvent) return;
     
     try {
