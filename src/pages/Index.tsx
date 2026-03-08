@@ -14,6 +14,7 @@ import { useProjects } from '@/hooks/useProjects';
 import { useEquipmentTypes } from '@/hooks/useEquipmentTypes';
 import { supabase } from '@/integrations/supabase/client';
 import { DEFAULT_PROJECTS, DEFAULT_EQUIPMENT_TYPES, EQUIPMENT_COLORS, EXCLUSIVE_EQUIPMENT_TYPES } from '@/constants';
+import { sendBookingNotification } from '@/hooks/useBookingNotifications';
 
 const Index: React.FC = () => {
   const { toast } = useToast();
@@ -195,6 +196,12 @@ const Index: React.FC = () => {
         }
       }
       
+      // Send email notification (non-blocking)
+      sendBookingNotification('created', newEvent, {
+        equipmentTypes,
+        projects,
+      });
+
       toast({
         title: "Agendamento criado!",
         description: bookBothProjects 
@@ -216,6 +223,14 @@ const Index: React.FC = () => {
     try {
       await cancelBooking.mutateAsync({ id: selectedEvent.id, reason, cancelledBy });
       
+      // Send cancellation notification (non-blocking)
+      sendBookingNotification('cancelled', selectedEvent, {
+        equipmentTypes,
+        projects,
+        cancellationReason: reason,
+        cancelledBy,
+      });
+
       toast({
         title: "Agendamento cancelado",
         description: `O agendamento de ${selectedEvent.solicitante} foi cancelado.`,
