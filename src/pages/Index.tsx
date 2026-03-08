@@ -223,6 +223,14 @@ const Index: React.FC = () => {
     try {
       await cancelBooking.mutateAsync({ id: selectedEvent.id, reason, cancelledBy });
       
+      // Send cancellation notification (non-blocking)
+      sendBookingNotification('cancelled', selectedEvent, {
+        equipmentTypes,
+        projects,
+        cancellationReason: reason,
+        cancelledBy,
+      });
+
       toast({
         title: "Agendamento cancelado",
         description: `O agendamento de ${selectedEvent.solicitante} foi cancelado.`,
