@@ -196,6 +196,12 @@ const Index: React.FC = () => {
         }
       }
       
+      // Send email notification (non-blocking)
+      sendBookingNotification('created', newEvent, {
+        equipmentTypes,
+        projects,
+      });
+
       toast({
         title: "Agendamento criado!",
         description: bookBothProjects 
