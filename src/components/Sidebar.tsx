@@ -57,6 +57,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsi
                   <AlertTriangle className="w-4 h-4" />
                   Agendamento Cancelado
                 </div>
+                {selectedEvent.cancelledBy && (
+                  <p className="text-xs text-foreground/80 font-medium">
+                    <span className="font-black">Cancelado por:</span> {selectedEvent.cancelledBy}
+                  </p>
+                )}
                 <p className="text-xs text-foreground/80 font-medium">
                   <span className="font-black">Motivo:</span> {selectedEvent.cancellationReason}
                 </p>
