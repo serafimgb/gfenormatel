@@ -39,7 +39,7 @@ const Index: React.FC = () => {
   const checkConflict = useCheckConflict();
   const cancelBooking = useCancelBooking();
 
-  const [viewType, setViewType] = useState<ViewType>(ViewType.Week);
+  const [viewType, setViewType] = useState<ViewType>(ViewType.Month);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<BookingEvent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
