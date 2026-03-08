@@ -6,7 +6,7 @@ import { Button } from './ui/button';
 interface CancelBookingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (reason: string) => void;
+  onConfirm: (reason: string, cancelledBy: string) => void;
   event: BookingEvent;
 }
 
@@ -17,13 +17,14 @@ export const CancelBookingModal: React.FC<CancelBookingModalProps> = ({
   event 
 }) => {
   const [reason, setReason] = useState('');
+  const [cancelledBy, setCancelledBy] = useState('');
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (reason.trim()) {
-      onConfirm(reason.trim());
+    if (reason.trim() && cancelledBy.trim()) {
+      onConfirm(reason.trim(), cancelledBy.trim());
     }
   };
 
@@ -58,6 +59,20 @@ export const CancelBookingModal: React.FC<CancelBookingModalProps> = ({
 
           <div>
             <label className="block text-[10px] font-black text-normatel-dark uppercase mb-1 tracking-wider">
+              Seu Nome (quem está cancelando) *
+            </label>
+            <input 
+              type="text"
+              required 
+              className="w-full border-destructive/30 border-2 rounded-lg px-3 py-2 text-sm focus:border-destructive outline-none bg-card font-bold text-foreground" 
+              value={cancelledBy} 
+              onChange={e => setCancelledBy(e.target.value)} 
+              placeholder="Digite seu nome..." 
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-black text-normatel-dark uppercase mb-1 tracking-wider">
               Motivo do Cancelamento *
             </label>
             <textarea 
@@ -83,7 +98,7 @@ export const CancelBookingModal: React.FC<CancelBookingModalProps> = ({
               type="submit" 
               variant="destructive"
               className="flex-1 font-black uppercase tracking-tighter"
-              disabled={!reason.trim()}
+              disabled={!reason.trim() || !cancelledBy.trim()}
             >
               Confirmar Cancelamento
             </Button>

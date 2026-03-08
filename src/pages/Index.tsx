@@ -39,7 +39,7 @@ const Index: React.FC = () => {
   const checkConflict = useCheckConflict();
   const cancelBooking = useCancelBooking();
 
-  const [viewType, setViewType] = useState<ViewType>(ViewType.Week);
+  const [viewType, setViewType] = useState<ViewType>(ViewType.Month);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<BookingEvent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -210,11 +210,11 @@ const Index: React.FC = () => {
     }
   };
 
-  const handleCancelBooking = async (reason: string) => {
+  const handleCancelBooking = async (reason: string, cancelledBy: string) => {
     if (!selectedEvent) return;
     
     try {
-      await cancelBooking.mutateAsync({ id: selectedEvent.id, reason });
+      await cancelBooking.mutateAsync({ id: selectedEvent.id, reason, cancelledBy });
       
       toast({
         title: "Agendamento cancelado",
@@ -310,14 +310,12 @@ const Index: React.FC = () => {
           setViewType={setViewType}
           onPrev={() => {
             const d = new Date(currentDate);
-            if (viewType === ViewType.Week) d.setDate(d.getDate() - 7);
-            else d.setMonth(d.getMonth() - 1);
+            d.setMonth(d.getMonth() - 1);
             setCurrentDate(d);
           }}
           onNext={() => {
             const d = new Date(currentDate);
-            if (viewType === ViewType.Week) d.setDate(d.getDate() + 7);
-            else d.setMonth(d.getMonth() + 1);
+            d.setMonth(d.getMonth() + 1);
             setCurrentDate(d);
           }}
           onToday={() => setCurrentDate(new Date())}

@@ -20,6 +20,7 @@ const mapToBookingEvent = (row: any): BookingEvent => ({
   isCancelled: row.is_cancelled || false,
   cancelledAt: row.cancelled_at ? new Date(row.cancelled_at) : undefined,
   cancellationReason: row.cancellation_reason,
+  cancelledBy: row.cancelled_by,
 });
 
 // Convert BookingEvent to database format
@@ -148,13 +149,14 @@ export const useCancelBooking = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
+    mutationFn: async ({ id, reason, cancelledBy }: { id: string; reason: string; cancelledBy: string }) => {
       const { error } = await supabase
         .from('bookings')
         .update({
           is_cancelled: true,
           cancelled_at: new Date().toISOString(),
           cancellation_reason: reason,
+          cancelled_by: cancelledBy,
         })
         .eq('id', id);
 
