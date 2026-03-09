@@ -30,7 +30,15 @@ export const DEFAULT_PROJECTS: Project[] = [
 // Quando agendado em um projeto, bloqueia automaticamente em todos os outros
 export const EXCLUSIVE_EQUIPMENT_TYPES = ["CAMINHAO_MUNCK", "RETROESCAVADEIRA"];
 
-export const CARTEIRA_OPTIONS = ["Civil", "Elétrica", "Mecânica", "Áreas Verdes", "Conservação e Limpeza", "Automação"];
+export const CARTEIRA_OPTIONS = [
+  "Civil",
+  "Elétrica",
+  "Mecânica",
+  "Áreas Verdes",
+  "Conservação e Limpeza",
+  "Automação",
+  "Logística",
+];
 
 // Responsáveis por carteira (e-mails para notificação)
 export const CARTEIRA_RESPONSAVEIS: Record<string, string[]> = {
