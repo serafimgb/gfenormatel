@@ -42,7 +42,7 @@ export const CARTEIRA_RESPONSAVEIS: Record<string, string[]> = {
     "poliane.marins@normatel.com.br",
   ],
   Elétrica: ["ana.rodrigues@normatel.com.br"],
-  Mecânica: ["responsavel.mecanica@normatel.com.br"],
+  Mecânica: ["ana.rodrigues@normatel.com.br"],
   "Áreas Verdes": ["responsavel.areasverdes@normatel.com.br"],
   "Conservação e Limpeza": ["responsavel.conservacao@normatel.com.br"],
   Automação: ["responsavel.automacao@normatel.com.br"],
