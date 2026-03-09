@@ -53,7 +53,7 @@ export const CARTEIRA_RESPONSAVEIS: Record<string, string[]> = {
   Mecânica: ["ana.rodrigues@normatel.com.br"],
   "Áreas Verdes": ["ana.rodrigues@normatel.com.br"],
   "Conservação e Limpeza": ["ana.rodrigues@normatel.com.br"],
-  Automação: ["ana.rodrigues@normatel.com.br"],
+  Automação: ["ana.rodrigues@normatel.com.br", "raphael.campos@normatel.com.br"],
 };
 
 export const SERVICE_COLORS: Record<string, string> = {
