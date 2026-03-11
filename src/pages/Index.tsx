@@ -57,7 +57,7 @@ const Index: React.FC = () => {
   const fetchInsights = useCallback(async () => {
     setLoadingInsights(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-insights', {
+      const response = await supabase.functions.invoke('generate-insights', {
         body: { 
           projectId: selectedProject.id,
           equipmentType: selectedEquipmentType?.id,
@@ -71,16 +71,35 @@ const Index: React.FC = () => {
         }
       });
 
-      if (error) throw error;
+      if (response.error) {
+        // Try to read the error body for specific status codes
+        const errorBody = response.error?.context;
+        const status = errorBody?.status;
+        
+        if (status === 402) {
+          setAiInsights('⚠️ Créditos de IA esgotados. Os insights serão restaurados quando houver créditos disponíveis.');
+          return;
+        }
+        if (status === 429) {
+          setAiInsights('⏳ Limite de requisições atingido. Tente novamente em alguns instantes.');
+          return;
+        }
+        throw response.error;
+      }
       
+      const data = response.data;
       if (data?.insight) {
         setAiInsights(data.insight);
       } else if (data?.error) {
-        setAiInsights(`⚠️ ${data.error}`);
+        if (data.error.includes('Créditos')) {
+          setAiInsights('⚠️ Créditos de IA esgotados. Os insights serão restaurados quando houver créditos disponíveis.');
+        } else {
+          setAiInsights(`⚠️ ${data.error}`);
+        }
       }
     } catch (error) {
       console.error('Error fetching insights:', error);
-      setAiInsights('❌ Erro ao gerar insights. Tente novamente.');
+      setAiInsights('📊 Insights indisponíveis no momento. O sistema continua funcionando normalmente.');
     } finally {
       setLoadingInsights(false);
     }
