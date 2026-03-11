@@ -76,5 +76,6 @@ export const EQUIPMENT_COLORS: Record<string, string> = {
   BONGO: "bg-amber-500/20 border-l-amber-500 text-amber-900 dark:text-amber-100",
   TRATOR_ARTICULADO: "bg-violet-500/20 border-l-violet-500 text-violet-900 dark:text-violet-100",
   TRATOR_ARRASTO: "bg-sky-500/20 border-l-sky-500 text-sky-900 dark:text-sky-100",
+  PEMT_18M: "bg-pink-600/20 border-l-pink-600 text-pink-900 dark:text-pink-100",
   DEFAULT: "bg-muted border-l-muted-foreground text-foreground",
 };
