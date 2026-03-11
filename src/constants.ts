@@ -18,6 +18,7 @@ export const DEFAULT_EQUIPMENT_TYPES: EquipmentType[] = [
   { id: "BONGO", name: "Bongo", color: "#F39C12", icon: "truck" },
   { id: "TRATOR_ARTICULADO", name: "Trator Articulado", color: "#8E44AD", icon: "tractor" },
   { id: "TRATOR_ARRASTO", name: "Trator de Arrasto", color: "#2980B9", icon: "tractor" },
+  { id: "PEMT_18M", name: "PEMT 18 metros", color: "#dc0073", icon: "crane" },
 ];
 
 // Default projects - will be fetched from database
