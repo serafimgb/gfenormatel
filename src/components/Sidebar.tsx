@@ -1,6 +1,8 @@
 import React from 'react';
-import { BookingEvent, EquipmentType } from '../types';
-import { MapPin, Clock, Info, X, Ban, AlertTriangle, Truck, Calendar } from 'lucide-react';
+import { BookingEvent, EquipmentType, Project } from '../types';
+import { MapPin, Clock, Info, X, Ban, AlertTriangle, Truck, Calendar, FileDown } from 'lucide-react';
+import { Button } from './ui/button';
+import { downloadBookingPdf } from '@/utils/generateBookingPdf';
 import { Button } from './ui/button';
 
 interface SidebarProps {
