@@ -160,7 +160,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsi
             </div>
 
             {!selectedEvent.isCancelled && onCancelClick && (
-              <div className="pt-4">
+              <div className="pt-4 space-y-2">
+                <Button 
+                  variant="outline"
+                  onClick={() => downloadBookingPdf(selectedEvent, equipmentTypes, projects)}
+                  className="w-full font-black uppercase tracking-tighter text-xs gap-2"
+                >
+                  <FileDown className="w-4 h-4" />
+                  Baixar PDF
+                </Button>
                 <Button 
                   variant="outline"
                   onClick={onCancelClick}
