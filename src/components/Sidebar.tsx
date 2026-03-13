@@ -16,7 +16,7 @@ interface SidebarProps {
   currentDate?: Date;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsights, loadingInsights, onCancelClick, equipmentTypes = [], currentDate }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsights, loadingInsights, onCancelClick, equipmentTypes = [], projects = [], currentDate }) => {
   const getEquipmentName = (equipmentTypeId: string) => {
     const equipment = equipmentTypes.find(eq => eq.id === equipmentTypeId);
     return equipment?.name || equipmentTypeId;
