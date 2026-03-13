@@ -381,6 +381,7 @@ const Index: React.FC = () => {
             loadingInsights={loadingInsights}
             onCancelClick={() => setIsCancelModalOpen(true)}
             equipmentTypes={equipmentTypes}
+            projects={projects}
             currentDate={currentDate}
           />
         </div>
