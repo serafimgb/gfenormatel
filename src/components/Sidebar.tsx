@@ -12,6 +12,7 @@ interface SidebarProps {
   loadingInsights: boolean;
   onCancelClick?: () => void;
   equipmentTypes?: EquipmentType[];
+  projects?: Project[];
   currentDate?: Date;
 }
 
