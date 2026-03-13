@@ -3,7 +3,6 @@ import { BookingEvent, EquipmentType, Project } from '../types';
 import { MapPin, Clock, Info, X, Ban, AlertTriangle, Truck, Calendar, FileDown } from 'lucide-react';
 import { Button } from './ui/button';
 import { downloadBookingPdf } from '@/utils/generateBookingPdf';
-import { Button } from './ui/button';
 
 interface SidebarProps {
   selectedEvent: BookingEvent | null;
