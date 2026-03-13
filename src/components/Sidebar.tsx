@@ -1,7 +1,8 @@
 import React from 'react';
-import { BookingEvent, EquipmentType } from '../types';
-import { MapPin, Clock, Info, X, Ban, AlertTriangle, Truck, Calendar } from 'lucide-react';
+import { BookingEvent, EquipmentType, Project } from '../types';
+import { MapPin, Clock, Info, X, Ban, AlertTriangle, Truck, Calendar, FileDown } from 'lucide-react';
 import { Button } from './ui/button';
+import { downloadBookingPdf } from '@/utils/generateBookingPdf';
 
 interface SidebarProps {
   selectedEvent: BookingEvent | null;
@@ -10,10 +11,11 @@ interface SidebarProps {
   loadingInsights: boolean;
   onCancelClick?: () => void;
   equipmentTypes?: EquipmentType[];
+  projects?: Project[];
   currentDate?: Date;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsights, loadingInsights, onCancelClick, equipmentTypes = [], currentDate }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsights, loadingInsights, onCancelClick, equipmentTypes = [], projects = [], currentDate }) => {
   const getEquipmentName = (equipmentTypeId: string) => {
     const equipment = equipmentTypes.find(eq => eq.id === equipmentTypeId);
     return equipment?.name || equipmentTypeId;
@@ -157,7 +159,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsi
             </div>
 
             {!selectedEvent.isCancelled && onCancelClick && (
-              <div className="pt-4">
+              <div className="pt-4 space-y-2">
+                <Button 
+                  variant="outline"
+                  onClick={() => downloadBookingPdf(selectedEvent, equipmentTypes, projects)}
+                  className="w-full font-black uppercase tracking-tighter text-xs gap-2"
+                >
+                  <FileDown className="w-4 h-4" />
+                  Baixar PDF
+                </Button>
                 <Button 
                   variant="outline"
                   onClick={onCancelClick}

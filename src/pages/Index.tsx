@@ -15,6 +15,7 @@ import { useEquipmentTypes } from '@/hooks/useEquipmentTypes';
 import { supabase } from '@/integrations/supabase/client';
 import { DEFAULT_PROJECTS, DEFAULT_EQUIPMENT_TYPES, EQUIPMENT_COLORS, EXCLUSIVE_EQUIPMENT_TYPES } from '@/constants';
 import { sendBookingNotification } from '@/hooks/useBookingNotifications';
+import { downloadMonthlyPdfs } from '@/utils/generateMonthlyPdfs';
 
 const Index: React.FC = () => {
   const { toast } = useToast();
@@ -247,8 +248,18 @@ const Index: React.FC = () => {
     }
   };
 
+  const handleDownloadMonthly = useCallback(() => {
+    const monthEvents = filteredEvents.filter(e => {
+      return e.start.getMonth() === currentDate.getMonth() && 
+             e.start.getFullYear() === currentDate.getFullYear() &&
+             !e.isCancelled;
+    });
+    const label = currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    downloadMonthlyPdfs(monthEvents, equipmentTypes, projects, label);
+  }, [filteredEvents, currentDate, equipmentTypes, projects]);
+
   return (
-    <Layout>
+    <Layout onDownloadMonthly={handleDownloadMonthly}>
       <div className="flex flex-col h-full bg-card">
         {/* Project Selector Header */}
         <div className="bg-normatel-gradient px-4 sm:px-6 py-3 flex items-center justify-between">
@@ -370,6 +381,7 @@ const Index: React.FC = () => {
             loadingInsights={loadingInsights}
             onCancelClick={() => setIsCancelModalOpen(true)}
             equipmentTypes={equipmentTypes}
+            projects={projects}
             currentDate={currentDate}
           />
         </div>
