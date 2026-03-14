@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/Layout';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth, AppRole } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, UserCheck, UserX, Trash2, Plus, ArrowLeft } from 'lucide-react';
+import { Shield, UserCheck, UserX, Trash2, Plus, ArrowLeft, Eye, Users, Settings, Crown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface UserProfile {
@@ -14,8 +14,22 @@ interface UserProfile {
   full_name: string | null;
   is_approved: boolean;
   created_at: string;
-  isAdmin?: boolean;
+  role?: AppRole;
 }
+
+const ROLE_OPTIONS: { value: AppRole; label: string; description: string; icon: React.ReactNode }[] = [
+  { value: 'viewer', label: 'Visualizador', description: 'Só visualiza agendamentos', icon: <Eye className="w-3.5 h-3.5" /> },
+  { value: 'user', label: 'Operador', description: 'Agenda e cancela os próprios', icon: <Users className="w-3.5 h-3.5" /> },
+  { value: 'manager', label: 'Gestor', description: 'Agenda, cancela e edita todos', icon: <Settings className="w-3.5 h-3.5" /> },
+  { value: 'admin', label: 'Admin', description: 'Acesso total + painel admin', icon: <Crown className="w-3.5 h-3.5" /> },
+];
+
+const ROLE_BADGE_COLORS: Record<string, string> = {
+  admin: 'bg-red-100 text-red-800 border-red-200',
+  manager: 'bg-amber-100 text-amber-800 border-amber-200',
+  user: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+  viewer: 'bg-slate-100 text-slate-600 border-slate-200',
+};
 
 const Admin: React.FC = () => {
   const { toast } = useToast();
@@ -24,11 +38,9 @@ const Admin: React.FC = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Equipment management
   const [equipmentTypes, setEquipmentTypes] = useState<any[]>([]);
   const [newEquipment, setNewEquipment] = useState({ id: '', name: '', color: '#57B952' });
 
-  // Project management
   const [projects, setProjects] = useState<any[]>([]);
   const [newProject, setNewProject] = useState({ id: '', name: '', description: '' });
 
@@ -40,10 +52,15 @@ const Admin: React.FC = () => {
 
     const { data: roles } = await supabase.from('user_roles').select('*');
     
-    const enriched = profiles.map(p => ({
-      ...p,
-      isAdmin: roles?.some(r => r.user_id === p.id && r.role === 'admin') ?? false,
-    }));
+    const enriched: UserProfile[] = profiles.map(p => {
+      const userRoles = roles?.filter(r => r.user_id === p.id) ?? [];
+      let role: AppRole = 'user';
+      if (userRoles.some(r => r.role === 'admin')) role = 'admin';
+      else if (userRoles.some(r => r.role === 'manager')) role = 'manager';
+      else if (userRoles.some(r => r.role === 'viewer')) role = 'viewer';
+      
+      return { ...p, role };
+    });
     
     setUsers(enriched);
     setLoading(false);
@@ -79,30 +96,21 @@ const Admin: React.FC = () => {
     }
   };
 
-  const toggleAdmin = async (userId: string, currentlyAdmin: boolean) => {
-    if (currentlyAdmin) {
-      const { error } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userId)
-        .eq('role', 'admin');
+  const changeRole = async (userId: string, newRole: AppRole) => {
+    // Delete all existing roles for user
+    await supabase.from('user_roles').delete().eq('user_id', userId);
+    
+    // Insert new role (if not default 'user' which means no role entry needed)
+    if (newRole !== 'user') {
+      const { error } = await supabase.from('user_roles').insert({ user_id: userId, role: newRole });
       if (error) {
         toast({ title: "Erro", description: error.message, variant: "destructive" });
-      } else {
-        toast({ title: "Permissão de admin removida." });
-        fetchUsers();
-      }
-    } else {
-      const { error } = await supabase
-        .from('user_roles')
-        .insert({ user_id: userId, role: 'admin' });
-      if (error) {
-        toast({ title: "Erro", description: error.message, variant: "destructive" });
-      } else {
-        toast({ title: "Admin adicionado!" });
-        fetchUsers();
+        return;
       }
     }
+    
+    toast({ title: `Perfil alterado para ${ROLE_OPTIONS.find(r => r.value === newRole)?.label}` });
+    fetchUsers();
   };
 
   const addEquipment = async () => {
@@ -162,9 +170,9 @@ const Admin: React.FC = () => {
   }
 
   const tabs = [
-    { key: 'users' as const, label: 'Usuários' },
-    { key: 'equipment' as const, label: 'Equipamentos' },
-    { key: 'projects' as const, label: 'Projetos' },
+    { key: 'users' as const, label: 'Usuários', icon: <Users className="w-4 h-4" /> },
+    { key: 'equipment' as const, label: 'Equipamentos', icon: <Settings className="w-4 h-4" /> },
+    { key: 'projects' as const, label: 'Projetos', icon: <Shield className="w-4 h-4" /> },
   ];
 
   return (
@@ -182,18 +190,18 @@ const Admin: React.FC = () => {
           </div>
         </div>
 
-        {/* Tabs */}
         <div className="flex bg-muted border-b border-border px-6">
           {tabs.map(tab => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`px-4 py-3 text-xs font-black uppercase tracking-wider border-b-4 transition-all ${
+              className={`px-4 py-3 text-xs font-black uppercase tracking-wider border-b-4 transition-all flex items-center gap-2 ${
                 activeTab === tab.key
                   ? 'border-primary text-primary'
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
+              {tab.icon}
               {tab.label}
             </button>
           ))}
@@ -202,24 +210,36 @@ const Admin: React.FC = () => {
         <div className="flex-1 overflow-auto p-6">
           {/* Users Tab */}
           {activeTab === 'users' && (
-            <div className="space-y-3 max-w-3xl">
+            <div className="space-y-3 max-w-4xl">
               {loading ? (
                 <p className="text-muted-foreground text-sm">Carregando...</p>
               ) : users.map(u => (
                 <div key={u.id} className="bg-card border border-border rounded-xl p-4 flex items-center justify-between gap-4">
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="font-bold text-sm text-foreground truncate">{u.full_name || 'Sem nome'}</p>
                     <p className="text-xs text-muted-foreground truncate">{u.email}</p>
-                    <div className="flex gap-2 mt-1">
+                    <div className="flex gap-2 mt-1.5">
                       {u.is_approved && (
                         <span className="text-[10px] font-black uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-full">Aprovado</span>
                       )}
-                      {u.isAdmin && (
-                        <span className="text-[10px] font-black uppercase tracking-wider bg-destructive/10 text-destructive px-2 py-0.5 rounded-full">Admin</span>
-                      )}
+                      <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${ROLE_BADGE_COLORS[u.role || 'user']}`}>
+                        {ROLE_OPTIONS.find(r => r.value === u.role)?.label || 'Operador'}
+                      </span>
                     </div>
                   </div>
-                  <div className="flex gap-2 shrink-0">
+                  <div className="flex gap-2 shrink-0 items-center">
+                    {/* Role selector */}
+                    <select
+                      value={u.role || 'user'}
+                      onChange={(e) => changeRole(u.id, e.target.value as AppRole)}
+                      className="text-xs font-bold bg-muted border border-border rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    >
+                      {ROLE_OPTIONS.map(opt => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label} — {opt.description}
+                        </option>
+                      ))}
+                    </select>
                     <Button
                       size="sm"
                       variant={u.is_approved ? "destructive" : "default"}
@@ -228,15 +248,6 @@ const Admin: React.FC = () => {
                     >
                       {u.is_approved ? <UserX className="w-3 h-3" /> : <UserCheck className="w-3 h-3" />}
                       {u.is_approved ? 'Revogar' : 'Aprovar'}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => toggleAdmin(u.id, u.isAdmin ?? false)}
-                      className="text-xs font-bold gap-1"
-                    >
-                      <Shield className="w-3 h-3" />
-                      {u.isAdmin ? 'Remover Admin' : 'Tornar Admin'}
                     </Button>
                   </div>
                 </div>

@@ -383,7 +383,11 @@ const Index: React.FC = () => {
             onClose={() => setSelectedEvent(null)}
             aiInsights={aiInsights}
             loadingInsights={loadingInsights}
-            onCancelClick={() => setIsCancelModalOpen(true)}
+            onCancelClick={
+              canCancelAll || (canCreate && selectedEvent?.createdBy === user?.id)
+                ? () => setIsCancelModalOpen(true)
+                : undefined
+            }
             equipmentTypes={equipmentTypes}
             projects={projects}
             currentDate={currentDate}
