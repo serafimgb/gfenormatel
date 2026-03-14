@@ -21,10 +21,11 @@ const mapToBookingEvent = (row: any): BookingEvent => ({
   cancelledAt: row.cancelled_at ? new Date(row.cancelled_at) : undefined,
   cancellationReason: row.cancellation_reason,
   cancelledBy: row.cancelled_by,
+  createdBy: row.created_by,
 });
 
 // Convert BookingEvent to database format
-const mapToDBFormat = (event: BookingEvent) => ({
+const mapToDBFormat = (event: BookingEvent, userId?: string) => ({
   pemt_id: event.pemtId,
   equipment_type: event.equipmentType,
   project_id: event.projectId,
@@ -37,6 +38,7 @@ const mapToDBFormat = (event: BookingEvent) => ({
   tempo_servico_horas: event.tempoServicoHoras,
   numero_om: event.numeroOm,
   descricao: event.descricao,
+  created_by: userId,
 });
 
 export const useBookings = (projectId?: string) => {
@@ -68,8 +70,8 @@ export const useCreateBooking = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (event: BookingEvent) => {
-      const dbData = mapToDBFormat(event);
+    mutationFn: async ({ event, userId }: { event: BookingEvent; userId?: string }) => {
+      const dbData = mapToDBFormat(event, userId);
       
       const { data, error } = await supabase
         .from('bookings')
@@ -121,7 +123,6 @@ export const useCheckConflict = () => {
       .lt('start_time', end.toISOString())
       .gt('end_time', start.toISOString());
 
-    // For exclusive equipment, check ALL projects; otherwise only current project
     if (!isExclusive) {
       query = query.eq('project_id', projectId);
     }

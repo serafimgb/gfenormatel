@@ -8,6 +8,7 @@ import { CancelBookingModal } from '../components/CancelBookingModal';
 import { BookingEvent, Filters, ViewType, EquipmentType, Project } from '../types';
 import { Plus, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { useBookings, useCreateBooking, useCheckConflict, useCancelBooking } from '@/hooks/useBookings';
 import { useOtherProjectBookings } from '@/hooks/useOtherProjectBookings';
 import { useProjects } from '@/hooks/useProjects';
@@ -19,6 +20,7 @@ import { downloadMonthlyPdfs } from '@/utils/generateMonthlyPdfs';
 
 const Index: React.FC = () => {
   const { toast } = useToast();
+  const { user, canCreate, canCancelAll } = useAuth();
   
   // Fetch projects and equipment types
   const { data: projects = DEFAULT_PROJECTS } = useProjects();
@@ -181,7 +183,7 @@ const Index: React.FC = () => {
       }
 
       // Create booking in current project
-      await createBooking.mutateAsync(newEvent);
+      await createBooking.mutateAsync({ event: newEvent, userId: user?.id });
 
       // If booking both projects, create in other projects too
       if (bookBothProjects) {
@@ -193,7 +195,7 @@ const Index: React.FC = () => {
             id: Math.random().toString(36).substr(2, 9),
             projectId: otherProject.id
           };
-          await createBooking.mutateAsync(otherEvent);
+          await createBooking.mutateAsync({ event: otherEvent, userId: user?.id });
         }
       }
       
@@ -248,14 +250,14 @@ const Index: React.FC = () => {
     }
   };
 
-  const handleDownloadMonthly = useCallback(() => {
+  const handleDownloadMonthly = useCallback((onProgress: (p: any) => void) => {
     const monthEvents = filteredEvents.filter(e => {
       return e.start.getMonth() === currentDate.getMonth() && 
              e.start.getFullYear() === currentDate.getFullYear() &&
              !e.isCancelled;
     });
     const label = currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-    downloadMonthlyPdfs(monthEvents, equipmentTypes, projects, label);
+    downloadMonthlyPdfs(monthEvents, equipmentTypes, projects, label, onProgress);
   }, [filteredEvents, currentDate, equipmentTypes, projects]);
 
   return (
@@ -320,13 +322,15 @@ const Index: React.FC = () => {
               </button>
             ))}
           </div>
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="bg-normatel-gradient text-primary-foreground px-4 sm:px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest flex items-center shadow-lg hover:brightness-110 active:brightness-95 transition-all shrink-0 ml-4"
-          >
-            <Plus className="w-4 h-4 mr-2" strokeWidth={3} />
-            Agendar
-          </button>
+          {canCreate && (
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="bg-normatel-gradient text-primary-foreground px-4 sm:px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest flex items-center shadow-lg hover:brightness-110 active:brightness-95 transition-all shrink-0 ml-4"
+            >
+              <Plus className="w-4 h-4 mr-2" strokeWidth={3} />
+              Agendar
+            </button>
+          )}
         </div>
 
         <FilterBar 
@@ -379,7 +383,11 @@ const Index: React.FC = () => {
             onClose={() => setSelectedEvent(null)}
             aiInsights={aiInsights}
             loadingInsights={loadingInsights}
-            onCancelClick={() => setIsCancelModalOpen(true)}
+            onCancelClick={
+              canCancelAll || (canCreate && selectedEvent?.createdBy === user?.id)
+                ? () => setIsCancelModalOpen(true)
+                : undefined
+            }
             equipmentTypes={equipmentTypes}
             projects={projects}
             currentDate={currentDate}

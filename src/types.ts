@@ -36,6 +36,7 @@ export interface BookingEvent {
   cancelledAt?: Date;
   cancellationReason?: string;
   cancelledBy?: string;
+  createdBy?: string;
 }
 
 export interface Filters {
