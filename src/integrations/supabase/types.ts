@@ -21,6 +21,7 @@ export type Database = {
           cancelled_by: string | null
           carteira: string
           created_at: string
+          created_by: string | null
           descricao: string | null
           end_time: string
           equipment_type: string | null
@@ -42,6 +43,7 @@ export type Database = {
           cancelled_by?: string | null
           carteira: string
           created_at?: string
+          created_by?: string | null
           descricao?: string | null
           end_time: string
           equipment_type?: string | null
@@ -63,6 +65,7 @@ export type Database = {
           cancelled_by?: string | null
           carteira?: string
           created_at?: string
+          created_by?: string | null
           descricao?: string | null
           end_time?: string
           equipment_type?: string | null
