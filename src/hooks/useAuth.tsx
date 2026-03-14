@@ -2,6 +2,8 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
 
+export type AppRole = 'admin' | 'manager' | 'user' | 'viewer';
+
 interface Profile {
   id: string;
   email: string | null;
@@ -14,7 +16,12 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
+  role: AppRole;
   isAdmin: boolean;
+  isManager: boolean;
+  isViewer: boolean;
+  canCreate: boolean;
+  canCancelAll: boolean;
   isApproved: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
@@ -24,7 +31,12 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   profile: null,
+  role: 'user',
   isAdmin: false,
+  isManager: false,
+  isViewer: false,
+  canCreate: true,
+  canCancelAll: false,
   isApproved: false,
   loading: true,
   signOut: async () => {},
@@ -36,7 +48,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [role, setRole] = useState<AppRole>('user');
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
@@ -55,7 +67,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .select('role')
       .eq('user_id', userId);
     
-    setIsAdmin(roles?.some(r => r.role === 'admin') ?? false);
+    // Priority: admin > manager > user > viewer
+    const roleList = roles?.map(r => r.role) ?? [];
+    if (roleList.includes('admin')) setRole('admin');
+    else if (roleList.includes('manager')) setRole('manager');
+    else if (roleList.includes('viewer')) setRole('viewer');
+    else setRole('user');
   };
 
   useEffect(() => {
@@ -68,7 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setTimeout(() => fetchProfile(session.user.id), 0);
         } else {
           setProfile(null);
-          setIsAdmin(false);
+          setRole('user');
         }
         setLoading(false);
       }
@@ -91,15 +108,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setSession(null);
     setProfile(null);
-    setIsAdmin(false);
+    setRole('user');
   };
+
+  const isAdmin = role === 'admin';
+  const isManager = role === 'manager';
+  const isViewer = role === 'viewer';
+  const canCreate = role !== 'viewer';
+  const canCancelAll = role === 'admin' || role === 'manager';
 
   return (
     <AuthContext.Provider value={{
       user,
       session,
       profile,
+      role,
       isAdmin,
+      isManager,
+      isViewer,
+      canCreate,
+      canCancelAll,
       isApproved: profile?.is_approved ?? false,
       loading,
       signOut,
