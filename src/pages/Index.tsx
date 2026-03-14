@@ -250,14 +250,14 @@ const Index: React.FC = () => {
     }
   };
 
-  const handleDownloadMonthly = useCallback(() => {
+  const handleDownloadMonthly = useCallback((onProgress: (p: any) => void) => {
     const monthEvents = filteredEvents.filter(e => {
       return e.start.getMonth() === currentDate.getMonth() && 
              e.start.getFullYear() === currentDate.getFullYear() &&
              !e.isCancelled;
     });
     const label = currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-    downloadMonthlyPdfs(monthEvents, equipmentTypes, projects, label);
+    downloadMonthlyPdfs(monthEvents, equipmentTypes, projects, label, onProgress);
   }, [filteredEvents, currentDate, equipmentTypes, projects]);
 
   return (
