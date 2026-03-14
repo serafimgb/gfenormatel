@@ -322,13 +322,15 @@ const Index: React.FC = () => {
               </button>
             ))}
           </div>
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="bg-normatel-gradient text-primary-foreground px-4 sm:px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest flex items-center shadow-lg hover:brightness-110 active:brightness-95 transition-all shrink-0 ml-4"
-          >
-            <Plus className="w-4 h-4 mr-2" strokeWidth={3} />
-            Agendar
-          </button>
+          {canCreate && (
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="bg-normatel-gradient text-primary-foreground px-4 sm:px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest flex items-center shadow-lg hover:brightness-110 active:brightness-95 transition-all shrink-0 ml-4"
+            >
+              <Plus className="w-4 h-4 mr-2" strokeWidth={3} />
+              Agendar
+            </button>
+          )}
         </div>
 
         <FilterBar 
