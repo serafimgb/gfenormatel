@@ -181,7 +181,7 @@ const Index: React.FC = () => {
       }
 
       // Create booking in current project
-      await createBooking.mutateAsync(newEvent);
+      await createBooking.mutateAsync({ event: newEvent, userId: user?.id });
 
       // If booking both projects, create in other projects too
       if (bookBothProjects) {
