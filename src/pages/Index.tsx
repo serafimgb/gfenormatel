@@ -193,7 +193,7 @@ const Index: React.FC = () => {
             id: Math.random().toString(36).substr(2, 9),
             projectId: otherProject.id
           };
-          await createBooking.mutateAsync(otherEvent);
+          await createBooking.mutateAsync({ event: otherEvent, userId: user?.id });
         }
       }
       
