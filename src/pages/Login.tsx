@@ -40,9 +40,18 @@ const Login: React.FC = () => {
         if (error) throw error;
       }
     } catch (error: any) {
+      const msg = error.message || '';
+      let description = "Erro ao autenticar.";
+      if (msg.includes('Email not confirmed')) {
+        description = "E-mail ainda não confirmado. Verifique sua caixa de entrada (e o spam) e clique no link de confirmação.";
+      } else if (msg.includes('Invalid login credentials')) {
+        description = "E-mail ou senha incorretos. Verifique e tente novamente.";
+      } else if (msg) {
+        description = msg;
+      }
       toast({
         title: "Erro",
-        description: error.message || "Erro ao autenticar.",
+        description,
         variant: "destructive",
       });
     } finally {
