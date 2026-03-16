@@ -166,7 +166,35 @@ const Login: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider">Senha</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider">Senha</Label>
+                {!isSignUp && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!email) {
+                        toast({ title: "Atenção", description: "Preencha o e-mail primeiro.", variant: "destructive" });
+                        return;
+                      }
+                      setLoading(true);
+                      try {
+                        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                          redirectTo: `${window.location.origin}/reset-password`,
+                        });
+                        if (error) throw error;
+                        toast({ title: "E-mail enviado!", description: "Verifique sua caixa de entrada para redefinir a senha." });
+                      } catch (error: any) {
+                        toast({ title: "Erro", description: error.message || "Erro ao enviar e-mail.", variant: "destructive" });
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                    className="text-xs text-primary font-bold hover:underline"
+                  >
+                    Esqueci minha senha
+                  </button>
+                )}
+              </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
                 <Input
