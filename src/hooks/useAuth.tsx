@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
 
@@ -51,57 +51,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [role, setRole] = useState<AppRole>('user');
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    
-    if (data) {
-      setProfile(data as Profile);
-    }
+  const fetchProfile = useCallback(async (userId: string) => {
+    try {
+      const [profileRes, rolesRes] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', userId).single(),
+        supabase.from('user_roles').select('role').eq('user_id', userId),
+      ]);
 
-    const { data: roles } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId);
-    
-    // Priority: admin > manager > user > viewer
-    const roleList = roles?.map(r => r.role) ?? [];
-    if (roleList.includes('admin')) setRole('admin');
-    else if (roleList.includes('manager')) setRole('manager');
-    else if (roleList.includes('viewer')) setRole('viewer');
-    else setRole('user');
-  };
+      if (profileRes.data) {
+        setProfile(profileRes.data as Profile);
+      }
+
+      const roleList = rolesRes.data?.map(r => r.role) ?? [];
+      if (roleList.includes('admin')) setRole('admin');
+      else if (roleList.includes('manager')) setRole('manager');
+      else if (roleList.includes('viewer')) setRole('viewer');
+      else setRole('user');
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+    }
+  }, []);
 
   useEffect(() => {
+    let isMounted = true;
+
+    // Set up auth listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      (_event, session) => {
+        if (!isMounted) return;
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
-          setTimeout(() => fetchProfile(session.user.id), 0);
+          // Fire and forget — don't await inside callback
+          fetchProfile(session.user.id).then(() => {
+            if (isMounted) setLoading(false);
+          });
         } else {
           setProfile(null);
           setRole('user');
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Then restore session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!isMounted) return;
       setSession(session);
       setUser(session?.user ?? null);
+
       if (session?.user) {
-        fetchProfile(session.user.id);
+        await fetchProfile(session.user.id);
       }
-      setLoading(false);
+      if (isMounted) setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, [fetchProfile]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
