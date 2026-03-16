@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+// @ts-ignore - virtual module from vite-plugin-pwa
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
