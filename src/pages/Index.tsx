@@ -253,6 +253,31 @@ const Index: React.FC = () => {
     }
   };
 
+  const handleEditBooking = async (updates: Partial<BookingEvent>, previousValues: Record<string, any>) => {
+    if (!selectedEvent) return;
+    try {
+      await updateBooking.mutateAsync({
+        id: selectedEvent.id,
+        updates,
+        editedBy: user?.id,
+        editedByName: profile?.full_name || user?.email || 'Usuário',
+        previousValues,
+      });
+      toast({
+        title: "Agendamento atualizado!",
+        description: `O agendamento de ${selectedEvent.solicitante} foi editado com sucesso.`,
+      });
+      setIsEditModalOpen(false);
+      setSelectedEvent(null);
+    } catch (error) {
+      toast({
+        title: "Erro ao editar",
+        description: "Ocorreu um erro ao editar o agendamento.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleDownloadMonthly = useCallback((onProgress: (p: any) => void) => {
     const monthEvents = filteredEvents.filter(e => {
       return e.start.getMonth() === currentDate.getMonth() && 
