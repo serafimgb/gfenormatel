@@ -146,6 +146,82 @@ export const useCheckConflict = () => {
   };
 };
 
+export const useUpdateBooking = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, updates, editedBy, editedByName, previousValues }: {
+      id: string;
+      updates: Partial<BookingEvent>;
+      editedBy?: string;
+      editedByName?: string;
+      previousValues: Record<string, any>;
+    }) => {
+      const dbUpdates: Record<string, any> = {};
+      if (updates.solicitante !== undefined) dbUpdates.solicitante = updates.solicitante;
+      if (updates.carteira !== undefined) dbUpdates.carteira = updates.carteira;
+      if (updates.local !== undefined) dbUpdates.local = updates.local;
+      if (updates.servicoTipo !== undefined) dbUpdates.servico_tipo = updates.servicoTipo;
+      if (updates.start !== undefined) dbUpdates.start_time = updates.start.toISOString();
+      if (updates.end !== undefined) dbUpdates.end_time = updates.end.toISOString();
+      if (updates.tempoServicoHoras !== undefined) dbUpdates.tempo_servico_horas = updates.tempoServicoHoras;
+      if (updates.numeroOm !== undefined) dbUpdates.numero_om = updates.numeroOm;
+      if (updates.equipmentType !== undefined) {
+        dbUpdates.equipment_type = updates.equipmentType;
+        dbUpdates.pemt_id = updates.equipmentType;
+      }
+
+      const { error } = await supabase
+        .from('bookings')
+        .update(dbUpdates)
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error updating booking:', error);
+        throw error;
+      }
+
+      // Record edit history
+      const changes: Record<string, any> = {};
+      Object.keys(dbUpdates).forEach(key => {
+        changes[key] = dbUpdates[key];
+      });
+
+      await supabase.from('booking_edit_history').insert({
+        booking_id: id,
+        edited_by: editedBy,
+        edited_by_name: editedByName,
+        changes,
+        previous_values: previousValues,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+    },
+  });
+};
+
+export const useBookingEditHistory = (bookingId?: string) => {
+  return useQuery({
+    queryKey: ['booking-edit-history', bookingId],
+    queryFn: async () => {
+      if (!bookingId) return [];
+      const { data, error } = await supabase
+        .from('booking_edit_history')
+        .select('*')
+        .eq('booking_id', bookingId)
+        .order('edited_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching edit history:', error);
+        throw error;
+      }
+      return data || [];
+    },
+    enabled: !!bookingId,
+  });
+};
+
 export const useCancelBooking = () => {
   const queryClient = useQueryClient();
 
