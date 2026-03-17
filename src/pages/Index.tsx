@@ -10,7 +10,7 @@ import { BookingEvent, Filters, ViewType, EquipmentType, Project } from '../type
 import { Plus, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { useBookings, useCreateBooking, useCheckConflict, useCancelBooking } from '@/hooks/useBookings';
+import { useBookings, useCreateBooking, useCheckConflict, useCancelBooking, useUpdateBooking } from '@/hooks/useBookings';
 import { useOtherProjectBookings } from '@/hooks/useOtherProjectBookings';
 import { useProjects } from '@/hooks/useProjects';
 import { useEquipmentTypes } from '@/hooks/useEquipmentTypes';
