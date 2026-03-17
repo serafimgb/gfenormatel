@@ -161,7 +161,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsi
               </div>
             </div>
 
-            {!selectedEvent.isCancelled && onCancelClick && (
+            {!selectedEvent.isCancelled && (onCancelClick || onEditClick) && (
               <div className="pt-4 space-y-2">
                 <Button 
                   variant="outline"
@@ -171,14 +171,71 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedEvent, onClose, aiInsi
                   <FileDown className="w-4 h-4" />
                   Baixar PDF
                 </Button>
-                <Button 
-                  variant="outline"
-                  onClick={onCancelClick}
-                  className="w-full border-destructive/50 text-destructive hover:bg-destructive/10 font-black uppercase tracking-tighter text-xs"
-                >
-                  <Ban className="w-4 h-4 mr-2" />
-                  Cancelar Agendamento
-                </Button>
+                {onEditClick && (
+                  <Button 
+                    variant="outline"
+                    onClick={onEditClick}
+                    className="w-full border-normatel-light/50 text-normatel-dark hover:bg-normatel-light/10 font-black uppercase tracking-tighter text-xs"
+                  >
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Editar Agendamento
+                  </Button>
+                )}
+                {onCancelClick && (
+                  <Button 
+                    variant="outline"
+                    onClick={onCancelClick}
+                    className="w-full border-destructive/50 text-destructive hover:bg-destructive/10 font-black uppercase tracking-tighter text-xs"
+                  >
+                    <Ban className="w-4 h-4 mr-2" />
+                    Cancelar Agendamento
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* Edit History */}
+            {editHistory.length > 0 && (
+              <div className="pt-4 border-t border-border">
+                <div className="flex items-center gap-2 mb-3">
+                  <History className="w-4 h-4 text-muted-foreground" />
+                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">
+                    Histórico de Edições
+                  </label>
+                </div>
+                <div className="space-y-2 max-h-48 overflow-y-auto no-scrollbar">
+                  {editHistory.map((entry: any) => {
+                    const fieldLabels: Record<string, string> = {
+                      solicitante: 'Solicitante',
+                      carteira: 'Carteira',
+                      local: 'Unidade/Setor',
+                      servico_tipo: 'Motivo',
+                      start_time: 'Início',
+                      end_time: 'Término',
+                      tempo_servico_horas: 'Tempo de Serviço',
+                      numero_om: 'Número OM',
+                      equipment_type: 'Equipamento',
+                      pemt_id: 'Equipamento',
+                    };
+                    const changedFields = Object.keys(entry.previous_values || {})
+                      .filter(k => k !== 'pemt_id')
+                      .map(k => fieldLabels[k] || k);
+
+                    return (
+                      <div key={entry.id} className="bg-muted/50 p-2 rounded-lg border border-border text-[10px]">
+                        <div className="font-black text-foreground">
+                          {entry.edited_by_name || 'Usuário'}
+                        </div>
+                        <div className="text-muted-foreground mt-0.5">
+                          Alterou: {changedFields.join(', ')}
+                        </div>
+                        <div className="text-muted-foreground/70 mt-0.5">
+                          {new Date(entry.edited_at).toLocaleDateString('pt-BR')} às {new Date(entry.edited_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
