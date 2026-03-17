@@ -21,7 +21,7 @@ import { downloadMonthlyPdfs } from '@/utils/generateMonthlyPdfs';
 
 const Index: React.FC = () => {
   const { toast } = useToast();
-  const { user, canCreate, canCancelAll } = useAuth();
+  const { user, canCreate, canCancelAll, isManager, isAdmin, profile } = useAuth();
   
   // Fetch projects and equipment types
   const { data: projects = DEFAULT_PROJECTS } = useProjects();
