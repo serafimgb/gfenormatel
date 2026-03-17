@@ -4,6 +4,7 @@ import { FilterBar } from '../components/FilterBar';
 import { CalendarGrid } from '../components/CalendarGrid';
 import { Sidebar } from '../components/Sidebar';
 import { BookingModal } from '../components/BookingModal';
+import { EditBookingModal } from '../components/EditBookingModal';
 import { CancelBookingModal } from '../components/CancelBookingModal';
 import { BookingEvent, Filters, ViewType, EquipmentType, Project } from '../types';
 import { Plus, ChevronDown } from 'lucide-react';
