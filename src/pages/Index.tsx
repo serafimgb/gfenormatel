@@ -50,6 +50,7 @@ const Index: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState<BookingEvent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
   const [filters, setFilters] = useState<Filters>({
     carteira: '',
