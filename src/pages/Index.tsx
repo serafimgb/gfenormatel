@@ -416,6 +416,11 @@ const Index: React.FC = () => {
                 ? () => setIsCancelModalOpen(true)
                 : undefined
             }
+            onEditClick={
+              (isManager || isAdmin) && selectedEvent && !selectedEvent.isCancelled
+                ? () => setIsEditModalOpen(true)
+                : undefined
+            }
             equipmentTypes={equipmentTypes}
             projects={projects}
             currentDate={currentDate}
@@ -433,6 +438,16 @@ const Index: React.FC = () => {
           equipmentTypes={equipmentTypes}
           initialDate={currentDate}
           allProjects={projects}
+        />
+      )}
+
+      {isEditModalOpen && selectedEvent && (
+        <EditBookingModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSave={handleEditBooking}
+          event={selectedEvent}
+          equipmentTypes={equipmentTypes}
         />
       )}
 
