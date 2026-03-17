@@ -4,12 +4,13 @@ import { FilterBar } from '../components/FilterBar';
 import { CalendarGrid } from '../components/CalendarGrid';
 import { Sidebar } from '../components/Sidebar';
 import { BookingModal } from '../components/BookingModal';
+import { EditBookingModal } from '../components/EditBookingModal';
 import { CancelBookingModal } from '../components/CancelBookingModal';
 import { BookingEvent, Filters, ViewType, EquipmentType, Project } from '../types';
 import { Plus, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { useBookings, useCreateBooking, useCheckConflict, useCancelBooking } from '@/hooks/useBookings';
+import { useBookings, useCreateBooking, useCheckConflict, useCancelBooking, useUpdateBooking } from '@/hooks/useBookings';
 import { useOtherProjectBookings } from '@/hooks/useOtherProjectBookings';
 import { useProjects } from '@/hooks/useProjects';
 import { useEquipmentTypes } from '@/hooks/useEquipmentTypes';
@@ -20,7 +21,7 @@ import { downloadMonthlyPdfs } from '@/utils/generateMonthlyPdfs';
 
 const Index: React.FC = () => {
   const { toast } = useToast();
-  const { user, canCreate, canCancelAll } = useAuth();
+  const { user, canCreate, canCancelAll, isManager, isAdmin, profile } = useAuth();
   
   // Fetch projects and equipment types
   const { data: projects = DEFAULT_PROJECTS } = useProjects();
@@ -42,12 +43,14 @@ const Index: React.FC = () => {
   const createBooking = useCreateBooking();
   const checkConflict = useCheckConflict();
   const cancelBooking = useCancelBooking();
+  const updateBooking = useUpdateBooking();
 
   const [viewType, setViewType] = useState<ViewType>(ViewType.Month);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<BookingEvent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
   const [filters, setFilters] = useState<Filters>({
     carteira: '',
@@ -250,6 +253,31 @@ const Index: React.FC = () => {
     }
   };
 
+  const handleEditBooking = async (updates: Partial<BookingEvent>, previousValues: Record<string, any>) => {
+    if (!selectedEvent) return;
+    try {
+      await updateBooking.mutateAsync({
+        id: selectedEvent.id,
+        updates,
+        editedBy: user?.id,
+        editedByName: profile?.full_name || user?.email || 'Usuário',
+        previousValues,
+      });
+      toast({
+        title: "Agendamento atualizado!",
+        description: `O agendamento de ${selectedEvent.solicitante} foi editado com sucesso.`,
+      });
+      setIsEditModalOpen(false);
+      setSelectedEvent(null);
+    } catch (error) {
+      toast({
+        title: "Erro ao editar",
+        description: "Ocorreu um erro ao editar o agendamento.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleDownloadMonthly = useCallback((onProgress: (p: any) => void) => {
     const monthEvents = filteredEvents.filter(e => {
       return e.start.getMonth() === currentDate.getMonth() && 
@@ -388,6 +416,11 @@ const Index: React.FC = () => {
                 ? () => setIsCancelModalOpen(true)
                 : undefined
             }
+            onEditClick={
+              (isManager || isAdmin) && selectedEvent && !selectedEvent.isCancelled
+                ? () => setIsEditModalOpen(true)
+                : undefined
+            }
             equipmentTypes={equipmentTypes}
             projects={projects}
             currentDate={currentDate}
@@ -405,6 +438,16 @@ const Index: React.FC = () => {
           equipmentTypes={equipmentTypes}
           initialDate={currentDate}
           allProjects={projects}
+        />
+      )}
+
+      {isEditModalOpen && selectedEvent && (
+        <EditBookingModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSave={handleEditBooking}
+          event={selectedEvent}
+          equipmentTypes={equipmentTypes}
         />
       )}
 

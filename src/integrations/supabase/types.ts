@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      booking_edit_history: {
+        Row: {
+          booking_id: string
+          changes: Json
+          edited_at: string
+          edited_by: string | null
+          edited_by_name: string | null
+          id: string
+          previous_values: Json
+        }
+        Insert: {
+          booking_id: string
+          changes?: Json
+          edited_at?: string
+          edited_by?: string | null
+          edited_by_name?: string | null
+          id?: string
+          previous_values?: Json
+        }
+        Update: {
+          booking_id?: string
+          changes?: Json
+          edited_at?: string
+          edited_by?: string | null
+          edited_by_name?: string | null
+          id?: string
+          previous_values?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_edit_history_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           cancellation_reason: string | null
