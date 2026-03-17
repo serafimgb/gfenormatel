@@ -43,6 +43,7 @@ const Index: React.FC = () => {
   const createBooking = useCreateBooking();
   const checkConflict = useCheckConflict();
   const cancelBooking = useCancelBooking();
+  const updateBooking = useUpdateBooking();
 
   const [viewType, setViewType] = useState<ViewType>(ViewType.Month);
   const [currentDate, setCurrentDate] = useState(new Date());
