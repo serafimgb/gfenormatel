@@ -1,24 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-// Responsáveis por carteira
-const CARTEIRA_RESPONSAVEIS: Record<string, string[]> = {
-  Civil: [
-    "gabriella.pinto@normatel.com.br",
-    "celiane.souza@normatel.com.br",
-    "daiana.marques@normatel.com.br",
-    "ana.rodrigues@normatel.com.br",
-    "poliane.marins@normatel.com.br",
-  ],
-  Elétrica: ["ana.rodrigues@normatel.com.br"],
-  Mecânica: ["ana.rodrigues@normatel.com.br"],
-  "Áreas Verdes": ["ana.rodrigues@normatel.com.br"],
-  "Conservação e Limpeza": ["ana.rodrigues@normatel.com.br"],
-  Automação: ["ana.rodrigues@normatel.com.br", "raphael.campos@normatel.com.br"],
 };
 
 const FROM_EMAIL = "notificacoes@norahub.com.br";
@@ -101,31 +86,6 @@ function buildCancelledEmail(data: BookingData): { subject: string; html: string
   };
 }
 
-function buildReminderEmail(data: BookingData): { subject: string; html: string } {
-  return {
-    subject: `⏰ Lembrete: Reserva em 48h - ${data.equipmentName || data.equipmentType} | ${data.solicitante}`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="background: linear-gradient(135deg, #F39C12, #E67E22); padding: 20px; border-radius: 12px 12px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 20px;">⏰ Lembrete de Reserva (48h)</h1>
-        </div>
-        <div style="background: #f9f9f9; padding: 24px; border-radius: 0 0 12px 12px; border: 1px solid #e0e0e0;">
-          <p style="color: #333; margin-bottom: 16px;">A seguinte reserva acontecerá em <strong>48 horas</strong>:</p>
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr><td style="padding: 8px 0; font-weight: bold; color: #555;">Solicitante:</td><td style="padding: 8px 0;">${data.solicitante}</td></tr>
-            <tr><td style="padding: 8px 0; font-weight: bold; color: #555;">Equipamento:</td><td style="padding: 8px 0;">${data.equipmentName || data.equipmentType}</td></tr>
-            <tr><td style="padding: 8px 0; font-weight: bold; color: #555;">Carteira:</td><td style="padding: 8px 0;">${data.carteira}</td></tr>
-            <tr><td style="padding: 8px 0; font-weight: bold; color: #555;">Local:</td><td style="padding: 8px 0;">${data.local}</td></tr>
-            <tr><td style="padding: 8px 0; font-weight: bold; color: #555;">Data:</td><td style="padding: 8px 0;">${formatDate(data.start)}</td></tr>
-            <tr><td style="padding: 8px 0; font-weight: bold; color: #555;">Horário:</td><td style="padding: 8px 0;">${formatTime(data.start)} - ${formatTime(data.end)}</td></tr>
-          </table>
-        </div>
-        <p style="color: #999; font-size: 12px; text-align: center; margin-top: 16px;">GFE Normatel - Sistema de Agendamento</p>
-      </div>
-    `,
-  };
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -137,16 +97,38 @@ serve(async (req) => {
       throw new Error("RESEND_API_KEY is not configured");
     }
 
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
     const { type, booking } = (await req.json()) as {
-      type: "created" | "cancelled" | "reminder";
+      type: "created" | "cancelled";
       booking: BookingData;
     };
 
-    // Get recipients based on carteira
-    const recipients = CARTEIRA_RESPONSAVEIS[booking.carteira] || [];
+    // Fetch recipients from database
+    // 1. Carteira-specific recipients
+    const { data: carteiraRecipients } = await supabase
+      .from("notification_recipients")
+      .select("email")
+      .eq("type", "carteira")
+      .eq("carteira", booking.carteira);
+
+    // 2. Gestão recipients (receive ALL carteiras)
+    const { data: gestaoRecipients } = await supabase
+      .from("notification_recipients")
+      .select("email")
+      .eq("type", "gestao");
+
+    const allEmails = new Set<string>();
+    (carteiraRecipients || []).forEach(r => allEmails.add(r.email));
+    (gestaoRecipients || []).forEach(r => allEmails.add(r.email));
+
+    const recipients = Array.from(allEmails);
+
     if (recipients.length === 0) {
       console.warn(`No recipients found for carteira: ${booking.carteira}`);
-      return new Response(JSON.stringify({ success: true, message: "No recipients for this carteira" }), {
+      return new Response(JSON.stringify({ success: true, message: "No recipients configured" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -158,9 +140,6 @@ serve(async (req) => {
         break;
       case "cancelled":
         emailContent = buildCancelledEmail(booking);
-        break;
-      case "reminder":
-        emailContent = buildReminderEmail(booking);
         break;
       default:
         throw new Error(`Unknown notification type: ${type}`);

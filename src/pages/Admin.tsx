@@ -5,8 +5,10 @@ import { useAuth, AppRole } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, UserCheck, UserX, Trash2, Plus, ArrowLeft, Eye, Users, Settings, Crown, ChevronDown, AlertTriangle } from 'lucide-react';
+import { Shield, UserCheck, UserX, Trash2, Plus, ArrowLeft, Eye, Users, Settings, Crown, ChevronDown, AlertTriangle, Mail, Link2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useNotificationRecipients, useAddRecipient, useDeleteRecipient, NotificationRecipient } from '@/hooks/useNotificationRecipients';
+import { CARTEIRA_OPTIONS } from '@/constants';
 
 interface UserProfile {
   id: string;
@@ -15,6 +17,7 @@ interface UserProfile {
   is_approved: boolean;
   created_at: string;
   role?: AppRole;
+  assignedProjects?: string[];
 }
 
 const ROLE_OPTIONS: { value: AppRole; label: string; description: string; icon: React.ReactNode }[] = [
@@ -46,14 +49,32 @@ const Admin: React.FC = () => {
   const [projects, setProjects] = useState<any[]>([]);
   const [newProject, setNewProject] = useState({ id: '', name: '', description: '' });
 
-  const [activeTab, setActiveTab] = useState<'users' | 'equipment' | 'projects'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'equipment' | 'projects' | 'notifications' | 'user-projects'>('users');
+
+  // Notification recipients
+  const { data: recipients = [], isLoading: loadingRecipients } = useNotificationRecipients();
+  const addRecipient = useAddRecipient();
+  const deleteRecipient = useDeleteRecipient();
+  const [newRecipient, setNewRecipient] = useState({ name: '', email: '', type: 'carteira' as 'carteira' | 'gestao', carteira: '' });
+
+  // User-project assignments
+  const [userProjects, setUserProjects] = useState<Record<string, string[]>>({});
 
   const fetchUsers = async () => {
     const { data: profiles } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
     if (!profiles) return;
 
     const { data: roles } = await supabase.from('user_roles').select('*');
+    const { data: upData } = await supabase.from('user_projects').select('*');
     
+    // Build user-project map
+    const upMap: Record<string, string[]> = {};
+    (upData || []).forEach((up: any) => {
+      if (!upMap[up.user_id]) upMap[up.user_id] = [];
+      upMap[up.user_id].push(up.project_id);
+    });
+    setUserProjects(upMap);
+
     const enriched: UserProfile[] = profiles.map(p => {
       const userRoles = roles?.filter(r => r.user_id === p.id) ?? [];
       let role: AppRole = 'user';
@@ -61,7 +82,7 @@ const Admin: React.FC = () => {
       else if (userRoles.some(r => r.role === 'manager')) role = 'manager';
       else if (userRoles.some(r => r.role === 'viewer')) role = 'viewer';
       
-      return { ...p, role };
+      return { ...p, role, assignedProjects: upMap[p.id] || [] };
     });
     
     setUsers(enriched);
@@ -181,6 +202,57 @@ const Admin: React.FC = () => {
     }
   };
 
+  const handleAddRecipient = async () => {
+    if (!newRecipient.name || !newRecipient.email) return;
+    try {
+      await addRecipient.mutateAsync({
+        name: newRecipient.name,
+        email: newRecipient.email,
+        type: newRecipient.type,
+        carteira: newRecipient.type === 'gestao' ? null : newRecipient.carteira || null,
+      });
+      toast({ title: "Destinatário adicionado!" });
+      setNewRecipient({ name: '', email: '', type: 'carteira', carteira: '' });
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleDeleteRecipient = async (id: string) => {
+    try {
+      await deleteRecipient.mutateAsync(id);
+      toast({ title: "Destinatário removido." });
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const toggleUserProject = async (userId: string, projectId: string) => {
+    const current = userProjects[userId] || [];
+    if (current.includes(projectId)) {
+      // Remove
+      const { error } = await supabase
+        .from('user_projects')
+        .delete()
+        .eq('user_id', userId)
+        .eq('project_id', projectId);
+      if (error) {
+        toast({ title: "Erro", description: error.message, variant: "destructive" });
+        return;
+      }
+    } else {
+      // Add
+      const { error } = await supabase
+        .from('user_projects')
+        .insert({ user_id: userId, project_id: projectId });
+      if (error) {
+        toast({ title: "Erro", description: error.message, variant: "destructive" });
+        return;
+      }
+    }
+    fetchUsers();
+  };
+
   if (!isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -191,9 +263,14 @@ const Admin: React.FC = () => {
 
   const tabs = [
     { key: 'users' as const, label: 'Usuários', icon: <Users className="w-4 h-4" /> },
+    { key: 'user-projects' as const, label: 'Projetos/Usuário', icon: <Link2 className="w-4 h-4" /> },
     { key: 'equipment' as const, label: 'Equipamentos', icon: <Settings className="w-4 h-4" /> },
     { key: 'projects' as const, label: 'Projetos', icon: <Shield className="w-4 h-4" /> },
+    { key: 'notifications' as const, label: 'Notificações', icon: <Mail className="w-4 h-4" /> },
   ];
+
+  const carteiraRecipients = recipients.filter(r => r.type === 'carteira');
+  const gestaoRecipients = recipients.filter(r => r.type === 'gestao');
 
   return (
     <Layout>
@@ -235,9 +312,7 @@ const Admin: React.FC = () => {
                 <p className="text-muted-foreground text-sm">Carregando...</p>
               ) : users.map(u => (
                 <div key={u.id} className="bg-card border border-border rounded-xl p-3 sm:p-4">
-                  {/* Mobile: stacked layout / Desktop: row layout */}
                   <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                    {/* User info */}
                     <div className="min-w-0 flex-1">
                       <p className="font-bold text-sm text-foreground truncate">{u.full_name || 'Sem nome'}</p>
                       <p className="text-xs text-muted-foreground truncate">{u.email}</p>
@@ -256,9 +331,7 @@ const Admin: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Actions */}
                     <div className="flex flex-col sm:flex-row gap-2 sm:items-center shrink-0">
-                      {/* Role selector */}
                       <div className="relative">
                         <select
                           value={u.role || 'user'}
@@ -285,7 +358,6 @@ const Admin: React.FC = () => {
                           {u.is_approved ? 'Revogar' : 'Aprovar'}
                         </Button>
 
-                        {/* Delete button */}
                         {u.id !== user?.id && (
                           confirmDeleteId === u.id ? (
                             <div className="flex gap-1">
@@ -321,6 +393,49 @@ const Admin: React.FC = () => {
                         )}
                       </div>
                     </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* User-Projects Tab */}
+          {activeTab === 'user-projects' && (
+            <div className="space-y-3 max-w-4xl">
+              <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mb-4">
+                Vincule usuários aos projetos que podem acessar. Admins veem todos.
+              </p>
+              {loading ? (
+                <p className="text-muted-foreground text-sm">Carregando...</p>
+              ) : users.map(u => (
+                <div key={u.id} className="bg-card border border-border rounded-xl p-3 sm:p-4">
+                  <div className="flex flex-col gap-2">
+                    <div className="min-w-0">
+                      <p className="font-bold text-sm text-foreground truncate">{u.full_name || 'Sem nome'}</p>
+                      <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                    </div>
+                    {u.role === 'admin' ? (
+                      <p className="text-xs text-muted-foreground italic">Admins têm acesso a todos os projetos</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {projects.map(p => {
+                          const isAssigned = (userProjects[u.id] || []).includes(p.id);
+                          return (
+                            <button
+                              key={p.id}
+                              onClick={() => toggleUserProject(u.id, p.id)}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-bold border-2 transition-all ${
+                                isAssigned
+                                  ? 'bg-primary/10 border-primary text-primary'
+                                  : 'bg-muted border-border text-muted-foreground hover:border-primary/50'
+                              }`}
+                            >
+                              {p.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -401,6 +516,116 @@ const Admin: React.FC = () => {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Notifications Tab */}
+          {activeTab === 'notifications' && (
+            <div className="space-y-6 max-w-3xl">
+              {/* Add recipient form */}
+              <div className="bg-muted/50 border border-border rounded-xl p-4 space-y-3">
+                <p className="text-xs font-black uppercase tracking-wider text-muted-foreground">Adicionar Destinatário</p>
+                <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
+                  <div className="flex-1">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nome</label>
+                    <Input value={newRecipient.name} onChange={e => setNewRecipient(p => ({ ...p, name: e.target.value }))} placeholder="Nome do responsável" />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">E-mail</label>
+                    <Input value={newRecipient.email} onChange={e => setNewRecipient(p => ({ ...p, email: e.target.value }))} placeholder="email@normatel.com.br" />
+                  </div>
+                  <div className="w-full sm:w-40">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tipo</label>
+                    <div className="relative">
+                      <select
+                        value={newRecipient.type}
+                        onChange={e => setNewRecipient(p => ({ ...p, type: e.target.value as 'carteira' | 'gestao' }))}
+                        className="w-full text-sm font-bold bg-card border border-border rounded-lg px-3 pr-8 py-2 cursor-pointer focus:outline-none appearance-none"
+                      >
+                        <option value="carteira">Carteira</option>
+                        <option value="gestao">Gestão</option>
+                      </select>
+                      <ChevronDown className="absolute right-2 top-2.5 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                    </div>
+                  </div>
+                  {newRecipient.type === 'carteira' && (
+                    <div className="w-full sm:w-48">
+                      <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Carteira</label>
+                      <div className="relative">
+                        <select
+                          value={newRecipient.carteira}
+                          onChange={e => setNewRecipient(p => ({ ...p, carteira: e.target.value }))}
+                          className="w-full text-sm font-bold bg-card border border-border rounded-lg px-3 pr-8 py-2 cursor-pointer focus:outline-none appearance-none"
+                        >
+                          <option value="">Selecione...</option>
+                          {CARTEIRA_OPTIONS.map(c => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </select>
+                        <ChevronDown className="absolute right-2 top-2.5 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                      </div>
+                    </div>
+                  )}
+                  <Button onClick={handleAddRecipient} disabled={addRecipient.isPending} className="bg-normatel-gradient font-bold gap-1 w-full sm:w-auto">
+                    <Plus className="w-4 h-4" /> Adicionar
+                  </Button>
+                </div>
+              </div>
+
+              {/* Gestão section */}
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-wider text-primary mb-3 flex items-center gap-2">
+                  <Crown className="w-4 h-4" /> Gestão
+                  <span className="text-muted-foreground font-normal normal-case">(recebem notificações de todas as carteiras)</span>
+                </h3>
+                {gestaoRecipients.length === 0 ? (
+                  <p className="text-xs text-muted-foreground italic">Nenhum gestor cadastrado</p>
+                ) : (
+                  <div className="space-y-2">
+                    {gestaoRecipients.map(r => (
+                      <div key={r.id} className="flex items-center justify-between bg-card border border-border rounded-lg p-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-foreground truncate">{r.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{r.email}</p>
+                        </div>
+                        <Button size="icon" variant="ghost" onClick={() => handleDeleteRecipient(r.id)} className="text-destructive hover:text-destructive shrink-0">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Carteira sections */}
+              {CARTEIRA_OPTIONS.map(carteira => {
+                const recs = carteiraRecipients.filter(r => r.carteira === carteira);
+                return (
+                  <div key={carteira}>
+                    <h3 className="text-xs font-black uppercase tracking-wider text-foreground mb-3 flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-muted-foreground" /> {carteira}
+                      <span className="text-muted-foreground font-normal">({recs.length})</span>
+                    </h3>
+                    {recs.length === 0 ? (
+                      <p className="text-xs text-muted-foreground italic">Nenhum destinatário</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {recs.map(r => (
+                          <div key={r.id} className="flex items-center justify-between bg-card border border-border rounded-lg p-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-foreground truncate">{r.name}</p>
+                              <p className="text-xs text-muted-foreground truncate">{r.email}</p>
+                            </div>
+                            <Button size="icon" variant="ghost" onClick={() => handleDeleteRecipient(r.id)} className="text-destructive hover:text-destructive shrink-0">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
