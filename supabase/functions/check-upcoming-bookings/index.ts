@@ -6,22 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Responsáveis por carteira
-const CARTEIRA_RESPONSAVEIS: Record<string, string[]> = {
-  Civil: [
-    "gabriella.pinto@normatel.com.br",
-    "celiane.souza@normatel.com.br",
-    "daiana.marques@normatel.com.br",
-    "ana.rodrigues@normatel.com.br",
-    "poliane.marins@normatel.com.br",
-  ],
-  Elétrica: ["ana.rodrigues@normatel.com.br"],
-  Mecânica: ["ana.rodrigues@normatel.com.br"],
-  "Áreas Verdes": ["ana.rodrigues@normatel.com.br"],
-  "Conservação e Limpeza": ["ana.rodrigues@normatel.com.br"],
-  Automação: ["ana.rodrigues@normatel.com.br", "raphael.campos@normatel.com.br"],
-};
-
 const FROM_EMAIL = "notificacoes@norahub.com.br";
 
 serve(async (req) => {
@@ -39,7 +23,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Find bookings starting in ~48 hours (window of 47-49h to avoid duplicates with hourly cron)
+    // Find bookings starting in ~48 hours
     const now = new Date();
     const from48h = new Date(now.getTime() + 47 * 60 * 60 * 1000);
     const to48h = new Date(now.getTime() + 49 * 60 * 60 * 1000);
@@ -58,10 +42,30 @@ serve(async (req) => {
 
     console.log(`Found ${bookings?.length || 0} bookings starting in ~48h`);
 
+    // Fetch all notification recipients once
+    const { data: carteiraRecipientsAll } = await supabase
+      .from("notification_recipients")
+      .select("email, carteira")
+      .eq("type", "carteira");
+
+    const { data: gestaoRecipientsAll } = await supabase
+      .from("notification_recipients")
+      .select("email")
+      .eq("type", "gestao");
+
+    const gestaoEmails = (gestaoRecipientsAll || []).map(r => r.email);
+
     let sentCount = 0;
 
     for (const booking of bookings || []) {
-      const recipients = CARTEIRA_RESPONSAVEIS[booking.carteira] || [];
+      // Build recipient list: carteira-specific + gestão
+      const carteiraEmails = (carteiraRecipientsAll || [])
+        .filter(r => r.carteira === booking.carteira)
+        .map(r => r.email);
+
+      const allEmails = new Set<string>([...carteiraEmails, ...gestaoEmails]);
+      const recipients = Array.from(allEmails);
+
       if (recipients.length === 0) continue;
 
       // Get equipment name
