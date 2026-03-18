@@ -18,14 +18,22 @@ import { supabase } from '@/integrations/supabase/client';
 import { DEFAULT_PROJECTS, DEFAULT_EQUIPMENT_TYPES, EQUIPMENT_COLORS, EXCLUSIVE_EQUIPMENT_TYPES } from '@/constants';
 import { sendBookingNotification } from '@/hooks/useBookingNotifications';
 import { downloadMonthlyPdfs } from '@/utils/generateMonthlyPdfs';
+import { useUserProjects } from '@/hooks/useUserProjects';
 
 const Index: React.FC = () => {
   const { toast } = useToast();
   const { user, canCreate, canCancelAll, isManager, isAdmin, profile } = useAuth();
   
   // Fetch projects and equipment types
-  const { data: projects = DEFAULT_PROJECTS } = useProjects();
+  const { data: allProjects = DEFAULT_PROJECTS } = useProjects();
   const { data: equipmentTypes = DEFAULT_EQUIPMENT_TYPES } = useEquipmentTypes();
+  const { data: userProjectIds = [] } = useUserProjects();
+  
+  // Filter projects by user permission
+  const projects = useMemo(() => {
+    if (isAdmin || userProjectIds.length === 0) return allProjects;
+    return allProjects.filter(p => userProjectIds.includes(p.id));
+  }, [allProjects, userProjectIds, isAdmin]);
   
   // Current project selection
   const [selectedProject, setSelectedProject] = useState<Project>(projects[0] || DEFAULT_PROJECTS[0]);
