@@ -145,6 +145,33 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_recipients: {
+        Row: {
+          carteira: string | null
+          created_at: string
+          email: string
+          id: string
+          name: string
+          type: Database["public"]["Enums"]["recipient_type"]
+        }
+        Insert: {
+          carteira?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          type: Database["public"]["Enums"]["recipient_type"]
+        }
+        Update: {
+          carteira?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          type?: Database["public"]["Enums"]["recipient_type"]
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -196,6 +223,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_projects: {
+        Row: {
+          created_at: string
+          id: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -230,6 +278,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user" | "viewer" | "manager"
+      recipient_type: "carteira" | "gestao"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -358,6 +407,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user", "viewer", "manager"],
+      recipient_type: ["carteira", "gestao"],
     },
   },
 } as const
