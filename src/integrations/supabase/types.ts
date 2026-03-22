@@ -202,6 +202,27 @@ export type Database = {
         }
         Relationships: []
       }
+      project_equipment: {
+        Row: {
+          created_at: string
+          equipment_type_id: string
+          id: string
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          equipment_type_id: string
+          id?: string
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          equipment_type_id?: string
+          id?: string
+          project_id?: string
+        }
+        Relationships: []
+      }
       projects: {
         Row: {
           created_at: string
