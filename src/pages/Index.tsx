@@ -50,14 +50,12 @@ const Index: React.FC = () => {
     return allEquipmentTypes.filter(eq => assignedIds.includes(eq.id));
   }, [allEquipmentTypes, projectEquipment]);
 
-  // Get shared equipment IDs (assigned to current project AND at least one other)
-  const { data: allPE = [] } = useProjectEquipment();
+  // Get shared equipment IDs (marked as is_shared in current project)
   const sharedEquipmentIds = useMemo(() => {
-    const currentIds = projectEquipment.map(pe => pe.equipment_type_id);
-    return currentIds.filter(eqId => 
-      allPE.some(pe => pe.equipment_type_id === eqId && pe.project_id !== selectedProject.id)
-    );
-  }, [projectEquipment, allPE, selectedProject.id]);
+    return projectEquipment
+      .filter(pe => pe.is_shared)
+      .map(pe => pe.equipment_type_id);
+  }, [projectEquipment]);
   
   // Update selected project when projects load
   useEffect(() => {

@@ -66,3 +66,21 @@ export const useToggleProjectEquipment = () => {
     },
   });
 };
+
+export const useToggleSharedEquipment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ projectId, equipmentTypeId, isShared }: { projectId: string; equipmentTypeId: string; isShared: boolean }) => {
+      const { error } = await supabase
+        .from('project_equipment')
+        .update({ is_shared: !isShared } as any)
+        .eq('project_id', projectId)
+        .eq('equipment_type_id', equipmentTypeId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project_equipment'] });
+    },
+  });
+};
