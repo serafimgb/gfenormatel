@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useBookings, useCreateBooking, useCheckConflict, useCancelBooking, useUpdateBooking } from '@/hooks/useBookings';
 import { useOtherProjectBookings } from '@/hooks/useOtherProjectBookings';
+import { useProjectEquipment } from '@/hooks/useProjectEquipment';
 import { useProjects } from '@/hooks/useProjects';
 import { useEquipmentTypes } from '@/hooks/useEquipmentTypes';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,7 +27,7 @@ const Index: React.FC = () => {
   
   // Fetch projects and equipment types
   const { data: allProjects = DEFAULT_PROJECTS } = useProjects();
-  const { data: equipmentTypes = DEFAULT_EQUIPMENT_TYPES } = useEquipmentTypes();
+  const { data: allEquipmentTypes = DEFAULT_EQUIPMENT_TYPES } = useEquipmentTypes();
   const { data: userProjectIds = [] } = useUserProjects();
   
   // Filter projects by user permission
@@ -39,12 +40,37 @@ const Index: React.FC = () => {
   const [selectedProject, setSelectedProject] = useState<Project>(projects[0] || DEFAULT_PROJECTS[0]);
   const [selectedEquipmentType, setSelectedEquipmentType] = useState<EquipmentType | null>(null);
   
+  // Fetch project-specific equipment
+  const { data: projectEquipment = [] } = useProjectEquipment(selectedProject.id);
+  
+  // Filter equipment types to only those assigned to current project
+  const equipmentTypes = useMemo(() => {
+    if (projectEquipment.length === 0) return allEquipmentTypes; // fallback: show all if none configured
+    const assignedIds = projectEquipment.map(pe => pe.equipment_type_id);
+    return allEquipmentTypes.filter(eq => assignedIds.includes(eq.id));
+  }, [allEquipmentTypes, projectEquipment]);
+
+  // Get shared equipment IDs (assigned to current project AND at least one other)
+  const { data: allPE = [] } = useProjectEquipment();
+  const sharedEquipmentIds = useMemo(() => {
+    const currentIds = projectEquipment.map(pe => pe.equipment_type_id);
+    return currentIds.filter(eqId => 
+      allPE.some(pe => pe.equipment_type_id === eqId && pe.project_id !== selectedProject.id)
+    );
+  }, [projectEquipment, allPE, selectedProject.id]);
+  
   // Update selected project when projects load
   useEffect(() => {
     if (projects.length > 0 && !projects.find(p => p.id === selectedProject.id)) {
       setSelectedProject(projects[0]);
     }
   }, [projects]);
+
+  // Reset equipment type filter when project changes
+  useEffect(() => {
+    setSelectedEquipmentType(null);
+    setFilters(prev => ({ ...prev, equipmentType: '' }));
+  }, [selectedProject.id]);
 
   const { data: allEvents = [], isLoading } = useBookings(selectedProject.id);
   const { data: otherProjectEvents = [] } = useOtherProjectBookings(selectedProject.id);
@@ -133,13 +159,14 @@ const Index: React.FC = () => {
     });
   }, [allEvents, filters]);
 
-  // Filter other project events by equipment type too
+  // Filter other project events to only shared equipment types
   const filteredOtherProjectEvents = useMemo(() => {
     return otherProjectEvents.filter(e => {
+      const isSharedEquipment = sharedEquipmentIds.includes(e.equipmentType);
       const matchesEquipmentType = !filters.equipmentType || e.equipmentType === filters.equipmentType;
-      return matchesEquipmentType;
+      return isSharedEquipment && matchesEquipmentType;
     });
-  }, [otherProjectEvents, filters]);
+  }, [otherProjectEvents, filters, sharedEquipmentIds]);
 
   const handleSaveEvent = async (newEvent: BookingEvent, bookBothProjects?: boolean) => {
     try {
