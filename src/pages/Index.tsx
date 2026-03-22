@@ -27,7 +27,7 @@ const Index: React.FC = () => {
   
   // Fetch projects and equipment types
   const { data: allProjects = DEFAULT_PROJECTS } = useProjects();
-  const { data: equipmentTypes = DEFAULT_EQUIPMENT_TYPES } = useEquipmentTypes();
+  const { data: allEquipmentTypes = DEFAULT_EQUIPMENT_TYPES } = useEquipmentTypes();
   const { data: userProjectIds = [] } = useUserProjects();
   
   // Filter projects by user permission
@@ -39,6 +39,25 @@ const Index: React.FC = () => {
   // Current project selection
   const [selectedProject, setSelectedProject] = useState<Project>(projects[0] || DEFAULT_PROJECTS[0]);
   const [selectedEquipmentType, setSelectedEquipmentType] = useState<EquipmentType | null>(null);
+  
+  // Fetch project-specific equipment
+  const { data: projectEquipment = [] } = useProjectEquipment(selectedProject.id);
+  
+  // Filter equipment types to only those assigned to current project
+  const equipmentTypes = useMemo(() => {
+    if (projectEquipment.length === 0) return allEquipmentTypes; // fallback: show all if none configured
+    const assignedIds = projectEquipment.map(pe => pe.equipment_type_id);
+    return allEquipmentTypes.filter(eq => assignedIds.includes(eq.id));
+  }, [allEquipmentTypes, projectEquipment]);
+
+  // Get shared equipment IDs (assigned to current project AND at least one other)
+  const { data: allPE = [] } = useProjectEquipment();
+  const sharedEquipmentIds = useMemo(() => {
+    const currentIds = projectEquipment.map(pe => pe.equipment_type_id);
+    return currentIds.filter(eqId => 
+      allPE.some(pe => pe.equipment_type_id === eqId && pe.project_id !== selectedProject.id)
+    );
+  }, [projectEquipment, allPE, selectedProject.id]);
   
   // Update selected project when projects load
   useEffect(() => {
