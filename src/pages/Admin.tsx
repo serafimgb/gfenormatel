@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Shield, UserCheck, UserX, Trash2, Plus, ArrowLeft, Eye, Users, Settings, Crown, ChevronDown, AlertTriangle, Mail, Link2, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useNotificationRecipients, useAddRecipient, useDeleteRecipient, NotificationRecipient } from '@/hooks/useNotificationRecipients';
-import { useAllProjectEquipment, useToggleProjectEquipment } from '@/hooks/useProjectEquipment';
+import { useAllProjectEquipment, useToggleProjectEquipment, useToggleSharedEquipment } from '@/hooks/useProjectEquipment';
 import { CARTEIRA_OPTIONS } from '@/constants';
 
 interface UserProfile {
