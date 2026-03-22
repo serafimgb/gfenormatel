@@ -1,0 +1,1 @@
+ALTER TABLE public.project_equipment ADD COLUMN is_shared boolean NOT NULL DEFAULT false;

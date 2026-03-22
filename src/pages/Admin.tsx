@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Shield, UserCheck, UserX, Trash2, Plus, ArrowLeft, Eye, Users, Settings, Crown, ChevronDown, AlertTriangle, Mail, Link2, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useNotificationRecipients, useAddRecipient, useDeleteRecipient, NotificationRecipient } from '@/hooks/useNotificationRecipients';
-import { useAllProjectEquipment, useToggleProjectEquipment } from '@/hooks/useProjectEquipment';
+import { useAllProjectEquipment, useToggleProjectEquipment, useToggleSharedEquipment } from '@/hooks/useProjectEquipment';
 import { CARTEIRA_OPTIONS } from '@/constants';
 
 interface UserProfile {
@@ -64,6 +64,7 @@ const Admin: React.FC = () => {
   // Project-equipment assignments
   const { data: allProjectEquipment = [], isLoading: loadingPE } = useAllProjectEquipment();
   const toggleProjectEquipment = useToggleProjectEquipment();
+  const toggleShared = useToggleSharedEquipment();
 
   const fetchUsers = async () => {
     const { data: profiles } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
@@ -493,7 +494,7 @@ const Admin: React.FC = () => {
           {activeTab === 'project-equipment' && (
             <div className="space-y-4 max-w-4xl">
               <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mb-4">
-                Vincule equipamentos aos projetos. Equipamentos compartilhados entre projetos mostram agendamentos cruzados no calendário.
+                Vincule equipamentos aos projetos. Marque como <strong>compartilhado</strong> para que agendamentos apareçam nos calendários de outros projetos que também tenham esse equipamento compartilhado.
               </p>
               {projects.map(project => {
                 const projectEqs = allProjectEquipment.filter(pe => pe.project_id === project.id);
@@ -504,20 +505,36 @@ const Admin: React.FC = () => {
                     <div className="flex flex-wrap gap-2">
                       {equipmentTypes.map(eq => {
                         const isAssigned = assignedIds.includes(eq.id);
+                        const pe = projectEqs.find(pe => pe.equipment_type_id === eq.id);
+                        const isShared = pe?.is_shared ?? false;
                         return (
-                          <button
-                            key={eq.id}
-                            onClick={() => toggleProjectEquipment.mutate({ projectId: project.id, equipmentTypeId: eq.id, assigned: isAssigned })}
-                            disabled={toggleProjectEquipment.isPending}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold border-2 transition-all flex items-center gap-1.5 ${
-                              isAssigned
-                                ? 'bg-primary/10 border-primary text-primary'
-                                : 'bg-muted border-border text-muted-foreground hover:border-primary/50'
-                            }`}
-                          >
-                            <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: eq.color }} />
-                            {eq.name}
-                          </button>
+                          <div key={eq.id} className="flex flex-col items-center gap-1">
+                            <button
+                              onClick={() => toggleProjectEquipment.mutate({ projectId: project.id, equipmentTypeId: eq.id, assigned: isAssigned })}
+                              disabled={toggleProjectEquipment.isPending}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-bold border-2 transition-all flex items-center gap-1.5 ${
+                                isAssigned
+                                  ? 'bg-primary/10 border-primary text-primary'
+                                  : 'bg-muted border-border text-muted-foreground hover:border-primary/50'
+                              }`}
+                            >
+                              <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: eq.color }} />
+                              {eq.name}
+                            </button>
+                            {isAssigned && (
+                              <button
+                                onClick={() => toggleShared.mutate({ projectId: project.id, equipmentTypeId: eq.id, isShared })}
+                                disabled={toggleShared.isPending}
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-all ${
+                                  isShared
+                                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                                    : 'bg-muted text-muted-foreground hover:bg-muted-foreground/20'
+                                }`}
+                              >
+                                {isShared ? '🔗 Compartilhado' : 'Individual'}
+                              </button>
+                            )}
+                          </div>
                         );
                       })}
                     </div>
