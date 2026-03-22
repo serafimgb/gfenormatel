@@ -270,6 +270,7 @@ const Admin: React.FC = () => {
     { key: 'users' as const, label: 'Usuários', icon: <Users className="w-4 h-4" /> },
     { key: 'user-projects' as const, label: 'Projetos/Usuário', icon: <Link2 className="w-4 h-4" /> },
     { key: 'equipment' as const, label: 'Equipamentos', icon: <Settings className="w-4 h-4" /> },
+    { key: 'project-equipment' as const, label: 'Equip./Projeto', icon: <Wrench className="w-4 h-4" /> },
     { key: 'projects' as const, label: 'Projetos', icon: <Shield className="w-4 h-4" /> },
     { key: 'notifications' as const, label: 'Notificações', icon: <Mail className="w-4 h-4" /> },
   ];
