@@ -489,7 +489,44 @@ const Admin: React.FC = () => {
             </div>
           )}
 
-          {/* Projects Tab */}
+          {/* Project-Equipment Tab */}
+          {activeTab === 'project-equipment' && (
+            <div className="space-y-4 max-w-4xl">
+              <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mb-4">
+                Vincule equipamentos aos projetos. Equipamentos compartilhados entre projetos mostram agendamentos cruzados no calendário.
+              </p>
+              {projects.map(project => {
+                const projectEqs = allProjectEquipment.filter(pe => pe.project_id === project.id);
+                const assignedIds = projectEqs.map(pe => pe.equipment_type_id);
+                return (
+                  <div key={project.id} className="bg-card border border-border rounded-xl p-3 sm:p-4">
+                    <p className="font-bold text-sm text-foreground mb-3">{project.name}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {equipmentTypes.map(eq => {
+                        const isAssigned = assignedIds.includes(eq.id);
+                        return (
+                          <button
+                            key={eq.id}
+                            onClick={() => toggleProjectEquipment.mutate({ projectId: project.id, equipmentTypeId: eq.id, assigned: isAssigned })}
+                            disabled={toggleProjectEquipment.isPending}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold border-2 transition-all flex items-center gap-1.5 ${
+                              isAssigned
+                                ? 'bg-primary/10 border-primary text-primary'
+                                : 'bg-muted border-border text-muted-foreground hover:border-primary/50'
+                            }`}
+                          >
+                            <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: eq.color }} />
+                            {eq.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           {activeTab === 'projects' && (
             <div className="space-y-4 max-w-2xl">
               <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
