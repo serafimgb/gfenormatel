@@ -61,6 +61,10 @@ const Admin: React.FC = () => {
   // User-project assignments
   const [userProjects, setUserProjects] = useState<Record<string, string[]>>({});
 
+  // Project-equipment assignments
+  const { data: allProjectEquipment = [], isLoading: loadingPE } = useAllProjectEquipment();
+  const toggleProjectEquipment = useToggleProjectEquipment();
+
   const fetchUsers = async () => {
     const { data: profiles } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
     if (!profiles) return;
