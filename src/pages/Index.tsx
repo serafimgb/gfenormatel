@@ -66,6 +66,12 @@ const Index: React.FC = () => {
     }
   }, [projects]);
 
+  // Reset equipment type filter when project changes
+  useEffect(() => {
+    setSelectedEquipmentType(null);
+    setFilters(prev => ({ ...prev, equipmentType: '' }));
+  }, [selectedProject.id]);
+
   const { data: allEvents = [], isLoading } = useBookings(selectedProject.id);
   const { data: otherProjectEvents = [] } = useOtherProjectBookings(selectedProject.id);
   const createBooking = useCreateBooking();
