@@ -5,6 +5,7 @@ export interface ProjectEquipment {
   id: string;
   project_id: string;
   equipment_type_id: string;
+  is_shared: boolean;
 }
 
 export const useProjectEquipment = (projectId?: string) => {
