@@ -153,13 +153,14 @@ const Index: React.FC = () => {
     });
   }, [allEvents, filters]);
 
-  // Filter other project events by equipment type too
+  // Filter other project events to only shared equipment types
   const filteredOtherProjectEvents = useMemo(() => {
     return otherProjectEvents.filter(e => {
+      const isSharedEquipment = sharedEquipmentIds.includes(e.equipmentType);
       const matchesEquipmentType = !filters.equipmentType || e.equipmentType === filters.equipmentType;
-      return matchesEquipmentType;
+      return isSharedEquipment && matchesEquipmentType;
     });
-  }, [otherProjectEvents, filters]);
+  }, [otherProjectEvents, filters, sharedEquipmentIds]);
 
   const handleSaveEvent = async (newEvent: BookingEvent, bookBothProjects?: boolean) => {
     try {
