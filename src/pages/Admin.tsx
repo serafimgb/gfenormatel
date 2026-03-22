@@ -50,7 +50,7 @@ const Admin: React.FC = () => {
   const [projects, setProjects] = useState<any[]>([]);
   const [newProject, setNewProject] = useState({ id: '', name: '', description: '' });
 
-  const [activeTab, setActiveTab] = useState<'users' | 'equipment' | 'projects' | 'notifications' | 'user-projects'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'equipment' | 'projects' | 'notifications' | 'user-projects' | 'project-equipment'>('users');
 
   // Notification recipients
   const { data: recipients = [], isLoading: loadingRecipients } = useNotificationRecipients();
