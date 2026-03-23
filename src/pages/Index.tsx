@@ -43,6 +43,7 @@ const Index: React.FC = () => {
   
   // Fetch project-specific equipment
   const { data: projectEquipment = [] } = useProjectEquipment(selectedProject.id);
+  const { data: sharingRecords = [] } = useEquipmentSharing();
   
   // Filter equipment types to only those assigned to current project
   const equipmentTypes = useMemo(() => {
