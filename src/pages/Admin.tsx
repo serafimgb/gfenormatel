@@ -65,7 +65,8 @@ const Admin: React.FC = () => {
   // Project-equipment assignments
   const { data: allProjectEquipment = [], isLoading: loadingPE } = useAllProjectEquipment();
   const toggleProjectEquipment = useToggleProjectEquipment();
-  const toggleShared = useToggleSharedEquipment();
+  const { data: sharingRecords = [], isLoading: loadingSharing } = useEquipmentSharing();
+  const toggleSharing = useToggleEquipmentSharing();
 
   const fetchUsers = async () => {
     const { data: profiles } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
