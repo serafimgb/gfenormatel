@@ -52,12 +52,12 @@ const Index: React.FC = () => {
     return allEquipmentTypes.filter(eq => assignedIds.includes(eq.id));
   }, [allEquipmentTypes, projectEquipment]);
 
-  // Get shared equipment IDs (marked as is_shared in current project)
-  const sharedEquipmentIds = useMemo(() => {
-    return projectEquipment
-      .filter(pe => pe.is_shared)
-      .map(pe => pe.equipment_type_id);
-  }, [projectEquipment]);
+  // Get equipment IDs that are shared TO this project from other projects
+  const sharedToThisProjectEquipmentIds = useMemo(() => {
+    return sharingRecords
+      .filter(s => s.target_project_id === selectedProject.id)
+      .map(s => s.equipment_type_id);
+  }, [sharingRecords, selectedProject.id]);
   
   // Update selected project when projects load
   useEffect(() => {
