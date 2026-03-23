@@ -121,6 +121,30 @@ export type Database = {
         }
         Relationships: []
       }
+      equipment_sharing: {
+        Row: {
+          created_at: string
+          equipment_type_id: string
+          id: string
+          source_project_id: string
+          target_project_id: string
+        }
+        Insert: {
+          created_at?: string
+          equipment_type_id: string
+          id?: string
+          source_project_id: string
+          target_project_id: string
+        }
+        Update: {
+          created_at?: string
+          equipment_type_id?: string
+          id?: string
+          source_project_id?: string
+          target_project_id?: string
+        }
+        Relationships: []
+      }
       equipment_types: {
         Row: {
           color: string
