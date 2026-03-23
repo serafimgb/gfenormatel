@@ -159,14 +159,19 @@ const Index: React.FC = () => {
     });
   }, [allEvents, filters]);
 
-  // Filter other project events to only shared equipment types
+  // Filter other project events: only show if equipment is shared TO this project from the event's project
   const filteredOtherProjectEvents = useMemo(() => {
     return otherProjectEvents.filter(e => {
-      const isSharedEquipment = sharedEquipmentIds.includes(e.equipmentType);
+      // Check if there's a sharing record from the event's project to this project for this equipment
+      const isSharedToUs = sharingRecords.some(
+        s => s.source_project_id === e.projectId &&
+             s.equipment_type_id === e.equipmentType &&
+             s.target_project_id === selectedProject.id
+      );
       const matchesEquipmentType = !filters.equipmentType || e.equipmentType === filters.equipmentType;
-      return isSharedEquipment && matchesEquipmentType;
+      return isSharedToUs && matchesEquipmentType;
     });
-  }, [otherProjectEvents, filters, sharedEquipmentIds]);
+  }, [otherProjectEvents, filters, sharingRecords, selectedProject.id]);
 
   const handleSaveEvent = async (newEvent: BookingEvent, bookBothProjects?: boolean) => {
     try {
