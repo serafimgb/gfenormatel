@@ -8,7 +8,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Shield, UserCheck, UserX, Trash2, Plus, ArrowLeft, Eye, Users, Settings, Crown, ChevronDown, AlertTriangle, Mail, Link2, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useNotificationRecipients, useAddRecipient, useDeleteRecipient, NotificationRecipient } from '@/hooks/useNotificationRecipients';
-import { useAllProjectEquipment, useToggleProjectEquipment, useToggleSharedEquipment } from '@/hooks/useProjectEquipment';
+import { useAllProjectEquipment, useToggleProjectEquipment } from '@/hooks/useProjectEquipment';
+import { useEquipmentSharing, useToggleEquipmentSharing } from '@/hooks/useEquipmentSharing';
 import { CARTEIRA_OPTIONS } from '@/constants';
 
 interface UserProfile {
@@ -64,7 +65,8 @@ const Admin: React.FC = () => {
   // Project-equipment assignments
   const { data: allProjectEquipment = [], isLoading: loadingPE } = useAllProjectEquipment();
   const toggleProjectEquipment = useToggleProjectEquipment();
-  const toggleShared = useToggleSharedEquipment();
+  const { data: sharingRecords = [], isLoading: loadingSharing } = useEquipmentSharing();
+  const toggleSharing = useToggleEquipmentSharing();
 
   const fetchUsers = async () => {
     const { data: profiles } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
@@ -492,47 +494,69 @@ const Admin: React.FC = () => {
 
           {/* Project-Equipment Tab */}
           {activeTab === 'project-equipment' && (
-            <div className="space-y-4 max-w-4xl">
+            <div className="space-y-6 max-w-4xl">
               <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mb-4">
-                Vincule equipamentos aos projetos. Marque como <strong>compartilhado</strong> para que agendamentos apareçam nos calendários de outros projetos que também tenham esse equipamento compartilhado.
+                Vincule equipamentos aos projetos. Clique nos nomes dos outros projetos para compartilhar agendamentos entre eles.
               </p>
               {projects.map(project => {
                 const projectEqs = allProjectEquipment.filter(pe => pe.project_id === project.id);
                 const assignedIds = projectEqs.map(pe => pe.equipment_type_id);
+                const otherProjects = projects.filter(p => p.id !== project.id);
                 return (
                   <div key={project.id} className="bg-card border border-border rounded-xl p-3 sm:p-4">
                     <p className="font-bold text-sm text-foreground mb-3">{project.name}</p>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="space-y-3">
                       {equipmentTypes.map(eq => {
                         const isAssigned = assignedIds.includes(eq.id);
-                        const pe = projectEqs.find(pe => pe.equipment_type_id === eq.id);
-                        const isShared = pe?.is_shared ?? false;
+                        const sharedWith = sharingRecords
+                          .filter(s => s.source_project_id === project.id && s.equipment_type_id === eq.id)
+                          .map(s => s.target_project_id);
                         return (
-                          <div key={eq.id} className="flex flex-col items-center gap-1">
-                            <button
-                              onClick={() => toggleProjectEquipment.mutate({ projectId: project.id, equipmentTypeId: eq.id, assigned: isAssigned })}
-                              disabled={toggleProjectEquipment.isPending}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-bold border-2 transition-all flex items-center gap-1.5 ${
-                                isAssigned
-                                  ? 'bg-primary/10 border-primary text-primary'
-                                  : 'bg-muted border-border text-muted-foreground hover:border-primary/50'
-                              }`}
-                            >
-                              <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: eq.color }} />
-                              {eq.name}
-                            </button>
-                            {isAssigned && (
+                          <div key={eq.id} className="flex flex-col gap-1.5">
+                            <div className="flex items-center gap-2">
                               <button
-                                onClick={() => toggleShared.mutate({ projectId: project.id, equipmentTypeId: eq.id, isShared })}
-                                disabled={toggleShared.isPending}
-                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-all ${
-                                  isShared
-                                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
-                                    : 'bg-muted text-muted-foreground hover:bg-muted-foreground/20'
+                                onClick={() => toggleProjectEquipment.mutate({ projectId: project.id, equipmentTypeId: eq.id, assigned: isAssigned })}
+                                disabled={toggleProjectEquipment.isPending}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold border-2 transition-all flex items-center gap-1.5 ${
+                                  isAssigned
+                                    ? 'bg-primary/10 border-primary text-primary'
+                                    : 'bg-muted border-border text-muted-foreground hover:border-primary/50'
                                 }`}
                               >
-                                {isShared ? '🔗 Compartilhado' : 'Individual'}
+                                <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: eq.color }} />
+                                {eq.name}
                               </button>
+                              {isAssigned && sharedWith.length > 0 && (
+                                <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-950 px-2 py-0.5 rounded-full">
+                                  🔗 {sharedWith.length} projeto{sharedWith.length > 1 ? 's' : ''}
+                                </span>
+                              )}
+                            </div>
+                            {isAssigned && otherProjects.length > 0 && (
+                              <div className="ml-5 flex flex-wrap gap-1.5">
+                                {otherProjects.map(op => {
+                                  const isSharedWithThis = sharedWith.includes(op.id);
+                                  return (
+                                    <button
+                                      key={op.id}
+                                      onClick={() => toggleSharing.mutate({
+                                        sourceProjectId: project.id,
+                                        equipmentTypeId: eq.id,
+                                        targetProjectId: op.id,
+                                        isCurrentlyShared: isSharedWithThis,
+                                      })}
+                                      disabled={toggleSharing.isPending}
+                                      className={`text-[10px] font-bold px-2.5 py-1 rounded-full border transition-all ${
+                                        isSharedWithThis
+                                          ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-700'
+                                          : 'bg-muted text-muted-foreground border-border hover:border-primary/50'
+                                      }`}
+                                    >
+                                      {isSharedWithThis ? '🔗' : '○'} {op.name}
+                                    </button>
+                                  );
+                                })}
+                              </div>
                             )}
                           </div>
                         );
