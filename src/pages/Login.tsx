@@ -155,20 +155,40 @@ const Login: React.FC = () => {
           {/* Email Form */}
           <form onSubmit={handleEmailAuth} className="space-y-4">
             {isSignUp && (
-              <div className="space-y-2">
-                <Label htmlFor="fullName" className="text-xs font-bold uppercase tracking-wider">Nome Completo</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="fullName"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Seu nome completo"
-                    className="pl-10"
-                    required
-                  />
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="fullName" className="text-xs font-bold uppercase tracking-wider">Nome Completo</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="fullName"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Seu nome completo"
+                      className="pl-10"
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="project" className="text-xs font-bold uppercase tracking-wider">Projeto</Label>
+                  <div className="relative">
+                    <Building2 className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                    <select
+                      id="project"
+                      value={selectedProject}
+                      onChange={(e) => setSelectedProject(e.target.value)}
+                      className="flex h-10 w-full rounded-md border border-input bg-background pl-10 pr-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:text-sm appearance-none"
+                      required
+                    >
+                      <option value="">Selecione seu projeto...</option>
+                      {projects.map(p => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </>
             )}
 
             <div className="space-y-2">
