@@ -12,6 +12,7 @@ interface NotificationBookingData {
   end: string;
   tempoServicoHoras: number;
   projectName?: string;
+  projectId?: string;
   numeroOm?: string;
   cancellationReason?: string;
   cancelledBy?: string;
