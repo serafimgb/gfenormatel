@@ -589,61 +589,9 @@ const Admin: React.FC = () => {
                 </Button>
               </div>
               <div className="space-y-2">
-                {projects.map(p => {
-                  const [isEditing, setIsEditing] = React.useState(false);
-                  const [editName, setEditName] = React.useState(p.name);
-                  
-                  const saveProjectName = async () => {
-                    if (!editName.trim()) return;
-                    const { error } = await supabase.from('projects').update({ name: editName.trim() }).eq('id', p.id);
-                    if (error) {
-                      toast({ title: "Erro", description: error.message, variant: "destructive" });
-                    } else {
-                      toast({ title: "Nome atualizado!" });
-                      fetchProjects();
-                    }
-                    setIsEditing(false);
-                  };
-
-                  return (
-                    <div key={p.id} className="flex items-center justify-between bg-card border border-border rounded-lg p-3">
-                      <div className="min-w-0 flex-1">
-                        {isEditing ? (
-                          <div className="flex items-center gap-2">
-                            <Input
-                              value={editName}
-                              onChange={e => setEditName(e.target.value)}
-                              className="h-8 text-sm"
-                              onKeyDown={e => e.key === 'Enter' && saveProjectName()}
-                              autoFocus
-                            />
-                            <Button size="icon" variant="ghost" onClick={saveProjectName} className="h-8 w-8 text-primary shrink-0">
-                              <Check className="w-4 h-4" />
-                            </Button>
-                            <Button size="icon" variant="ghost" onClick={() => { setIsEditing(false); setEditName(p.name); }} className="h-8 w-8 shrink-0">
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <>
-                            <p className="text-sm font-bold text-foreground truncate">{p.name}</p>
-                            <p className="text-xs text-muted-foreground truncate">{p.description || p.id}</p>
-                          </>
-                        )}
-                      </div>
-                      {!isEditing && (
-                        <div className="flex gap-1 shrink-0">
-                          <Button size="icon" variant="ghost" onClick={() => setIsEditing(true)} className="text-muted-foreground hover:text-foreground">
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" onClick={() => deleteProject(p.id)} className="text-destructive hover:text-destructive">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                {projects.map(p => (
+                  <ProjectRow key={p.id} project={p} onDelete={deleteProject} onUpdate={fetchProjects} />
+                ))}
               </div>
             </div>
           )}
