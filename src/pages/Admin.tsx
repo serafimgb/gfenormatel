@@ -5,7 +5,7 @@ import { useAuth, AppRole } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, UserCheck, UserX, Trash2, Plus, ArrowLeft, Eye, Users, Settings, Crown, ChevronDown, AlertTriangle, Mail, Link2, Wrench } from 'lucide-react';
+import { Shield, UserCheck, UserX, Trash2, Plus, ArrowLeft, Eye, Users, Settings, Crown, ChevronDown, AlertTriangle, Mail, Link2, Wrench, Pencil, Check, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useNotificationRecipients, useAddRecipient, useDeleteRecipient, NotificationRecipient } from '@/hooks/useNotificationRecipients';
 import { useAllProjectEquipment, useToggleProjectEquipment } from '@/hooks/useProjectEquipment';
@@ -36,6 +36,63 @@ const ROLE_BADGE_COLORS: Record<string, string> = {
   viewer: 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600',
 };
 
+const ProjectRow: React.FC<{ project: any; onDelete: (id: string) => void; onUpdate: () => void }> = ({ project, onDelete, onUpdate }) => {
+  const { toast } = useToast();
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editName, setEditName] = React.useState(project.name);
+
+  const saveProjectName = async () => {
+    if (!editName.trim()) return;
+    const { error } = await supabase.from('projects').update({ name: editName.trim() }).eq('id', project.id);
+    if (error) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Nome atualizado!" });
+      onUpdate();
+    }
+    setIsEditing(false);
+  };
+
+  return (
+    <div className="flex items-center justify-between bg-card border border-border rounded-lg p-3">
+      <div className="min-w-0 flex-1">
+        {isEditing ? (
+          <div className="flex items-center gap-2">
+            <Input
+              value={editName}
+              onChange={e => setEditName(e.target.value)}
+              className="h-8 text-sm"
+              onKeyDown={e => e.key === 'Enter' && saveProjectName()}
+              autoFocus
+            />
+            <Button size="icon" variant="ghost" onClick={saveProjectName} className="h-8 w-8 text-primary shrink-0">
+              <Check className="w-4 h-4" />
+            </Button>
+            <Button size="icon" variant="ghost" onClick={() => { setIsEditing(false); setEditName(project.name); }} className="h-8 w-8 shrink-0">
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        ) : (
+          <>
+            <p className="text-sm font-bold text-foreground truncate">{project.name}</p>
+            <p className="text-xs text-muted-foreground truncate">{project.description || project.id}</p>
+          </>
+        )}
+      </div>
+      {!isEditing && (
+        <div className="flex gap-1 shrink-0">
+          <Button size="icon" variant="ghost" onClick={() => setIsEditing(true)} className="text-muted-foreground hover:text-foreground">
+            <Pencil className="w-4 h-4" />
+          </Button>
+          <Button size="icon" variant="ghost" onClick={() => onDelete(project.id)} className="text-destructive hover:text-destructive">
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Admin: React.FC = () => {
   const { toast } = useToast();
   const { isAdmin, user } = useAuth();
@@ -57,7 +114,7 @@ const Admin: React.FC = () => {
   const { data: recipients = [], isLoading: loadingRecipients } = useNotificationRecipients();
   const addRecipient = useAddRecipient();
   const deleteRecipient = useDeleteRecipient();
-  const [newRecipient, setNewRecipient] = useState({ name: '', email: '', type: 'carteira' as 'carteira' | 'gestao', carteira: '' });
+  const [newRecipient, setNewRecipient] = useState({ name: '', email: '', type: 'carteira' as 'carteira' | 'gestao', carteira: '', project_id: '' });
 
   // User-project assignments
   const [userProjects, setUserProjects] = useState<Record<string, string[]>>({});
@@ -211,16 +268,17 @@ const Admin: React.FC = () => {
   };
 
   const handleAddRecipient = async () => {
-    if (!newRecipient.name || !newRecipient.email) return;
+    if (!newRecipient.name || !newRecipient.email || !newRecipient.project_id) return;
     try {
       await addRecipient.mutateAsync({
         name: newRecipient.name,
         email: newRecipient.email,
         type: newRecipient.type,
         carteira: newRecipient.type === 'gestao' ? null : newRecipient.carteira || null,
+        project_id: newRecipient.project_id,
       });
       toast({ title: "Destinatário adicionado!" });
-      setNewRecipient({ name: '', email: '', type: 'carteira', carteira: '' });
+      setNewRecipient({ name: '', email: '', type: 'carteira', carteira: '', project_id: '' });
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     }
@@ -589,15 +647,7 @@ const Admin: React.FC = () => {
               </div>
               <div className="space-y-2">
                 {projects.map(p => (
-                  <div key={p.id} className="flex items-center justify-between bg-card border border-border rounded-lg p-3">
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-foreground truncate">{p.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{p.description || p.id}</p>
-                    </div>
-                    <Button size="icon" variant="ghost" onClick={() => deleteProject(p.id)} className="text-destructive hover:text-destructive shrink-0">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  <ProjectRow key={p.id} project={p} onDelete={deleteProject} onUpdate={fetchProjects} />
                 ))}
               </div>
             </div>
@@ -609,14 +659,30 @@ const Admin: React.FC = () => {
               {/* Add recipient form */}
               <div className="bg-muted/50 border border-border rounded-xl p-4 space-y-3">
                 <p className="text-xs font-black uppercase tracking-wider text-muted-foreground">Adicionar Destinatário</p>
-                <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
-                  <div className="flex-1">
+                <div className="flex flex-col sm:flex-row gap-2 sm:items-end flex-wrap">
+                  <div className="flex-1 min-w-[150px]">
                     <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nome</label>
                     <Input value={newRecipient.name} onChange={e => setNewRecipient(p => ({ ...p, name: e.target.value }))} placeholder="Nome do responsável" />
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-[150px]">
                     <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">E-mail</label>
                     <Input value={newRecipient.email} onChange={e => setNewRecipient(p => ({ ...p, email: e.target.value }))} placeholder="email@normatel.com.br" />
+                  </div>
+                  <div className="w-full sm:w-40">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Projeto</label>
+                    <div className="relative">
+                      <select
+                        value={newRecipient.project_id}
+                        onChange={e => setNewRecipient(p => ({ ...p, project_id: e.target.value }))}
+                        className="w-full text-sm font-bold bg-card border border-border rounded-lg px-3 pr-8 py-2 cursor-pointer focus:outline-none appearance-none"
+                      >
+                        <option value="">Selecione...</option>
+                        {projects.map(p => (
+                          <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-2 top-2.5 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                    </div>
                   </div>
                   <div className="w-full sm:w-40">
                     <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tipo</label>
@@ -656,60 +722,106 @@ const Admin: React.FC = () => {
                 </div>
               </div>
 
-              {/* Gestão section */}
-              <div>
-                <h3 className="text-xs font-black uppercase tracking-wider text-primary mb-3 flex items-center gap-2">
-                  <Crown className="w-4 h-4" /> Gestão
-                  <span className="text-muted-foreground font-normal normal-case">(recebem notificações de todas as carteiras)</span>
-                </h3>
-                {gestaoRecipients.length === 0 ? (
-                  <p className="text-xs text-muted-foreground italic">Nenhum gestor cadastrado</p>
-                ) : (
-                  <div className="space-y-2">
-                    {gestaoRecipients.map(r => (
-                      <div key={r.id} className="flex items-center justify-between bg-card border border-border rounded-lg p-3">
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold text-foreground truncate">{r.name}</p>
-                          <p className="text-xs text-muted-foreground truncate">{r.email}</p>
-                        </div>
-                        <Button size="icon" variant="ghost" onClick={() => handleDeleteRecipient(r.id)} className="text-destructive hover:text-destructive shrink-0">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              {/* Group by project */}
+              {projects.map(project => {
+                const projectRecipients = recipients.filter(r => r.project_id === project.id);
+                const projGestao = projectRecipients.filter(r => r.type === 'gestao');
+                const projCarteira = projectRecipients.filter(r => r.type === 'carteira');
 
-              {/* Carteira sections */}
-              {CARTEIRA_OPTIONS.map(carteira => {
-                const recs = carteiraRecipients.filter(r => r.carteira === carteira);
                 return (
-                  <div key={carteira}>
-                    <h3 className="text-xs font-black uppercase tracking-wider text-foreground mb-3 flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-muted-foreground" /> {carteira}
-                      <span className="text-muted-foreground font-normal">({recs.length})</span>
-                    </h3>
-                    {recs.length === 0 ? (
-                      <p className="text-xs text-muted-foreground italic">Nenhum destinatário</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {recs.map(r => (
-                          <div key={r.id} className="flex items-center justify-between bg-card border border-border rounded-lg p-3">
-                            <div className="min-w-0">
-                              <p className="text-sm font-bold text-foreground truncate">{r.name}</p>
-                              <p className="text-xs text-muted-foreground truncate">{r.email}</p>
-                            </div>
-                            <Button size="icon" variant="ghost" onClick={() => handleDeleteRecipient(r.id)} className="text-destructive hover:text-destructive shrink-0">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                  <div key={project.id} className="border border-border rounded-xl overflow-hidden">
+                    <div className="bg-muted px-4 py-3 border-b border-border">
+                      <h3 className="text-sm font-black uppercase tracking-wider text-foreground">
+                        {project.name}
+                        <span className="text-muted-foreground font-normal normal-case ml-2 text-xs">
+                          ({projectRecipients.length} destinatário{projectRecipients.length !== 1 ? 's' : ''})
+                        </span>
+                      </h3>
+                    </div>
+                    <div className="p-4 space-y-4">
+                      {/* Gestão for this project */}
+                      <div>
+                        <h4 className="text-xs font-black uppercase tracking-wider text-primary mb-2 flex items-center gap-2">
+                          <Crown className="w-3.5 h-3.5" /> Gestão
+                          <span className="text-muted-foreground font-normal normal-case">(recebem todas as notificações deste projeto)</span>
+                        </h4>
+                        {projGestao.length === 0 ? (
+                          <p className="text-xs text-muted-foreground italic">Nenhum gestor cadastrado</p>
+                        ) : (
+                          <div className="space-y-1.5">
+                            {projGestao.map(r => (
+                              <div key={r.id} className="flex items-center justify-between bg-card border border-border rounded-lg p-2.5">
+                                <div className="min-w-0">
+                                  <p className="text-sm font-bold text-foreground truncate">{r.name}</p>
+                                  <p className="text-xs text-muted-foreground truncate">{r.email}</p>
+                                </div>
+                                <Button size="icon" variant="ghost" onClick={() => handleDeleteRecipient(r.id)} className="text-destructive hover:text-destructive shrink-0 h-8 w-8">
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
                       </div>
-                    )}
+
+                      {/* Carteira for this project */}
+                      {CARTEIRA_OPTIONS.map(carteira => {
+                        const recs = projCarteira.filter(r => r.carteira === carteira);
+                        if (recs.length === 0) return null;
+                        return (
+                          <div key={carteira}>
+                            <h4 className="text-xs font-black uppercase tracking-wider text-foreground mb-2 flex items-center gap-2">
+                              <Mail className="w-3.5 h-3.5 text-muted-foreground" /> {carteira}
+                              <span className="text-muted-foreground font-normal">({recs.length})</span>
+                            </h4>
+                            <div className="space-y-1.5">
+                              {recs.map(r => (
+                                <div key={r.id} className="flex items-center justify-between bg-card border border-border rounded-lg p-2.5">
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-bold text-foreground truncate">{r.name}</p>
+                                    <p className="text-xs text-muted-foreground truncate">{r.email}</p>
+                                  </div>
+                                  <Button size="icon" variant="ghost" onClick={() => handleDeleteRecipient(r.id)} className="text-destructive hover:text-destructive shrink-0 h-8 w-8">
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 );
               })}
+
+              {/* Recipients without project (legacy) */}
+              {(() => {
+                const orphanRecipients = recipients.filter(r => !r.project_id);
+                if (orphanRecipients.length === 0) return null;
+                return (
+                  <div className="border border-border rounded-xl overflow-hidden border-dashed">
+                    <div className="bg-muted px-4 py-3 border-b border-border">
+                      <h3 className="text-sm font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                        ⚠️ Sem projeto vinculado ({orphanRecipients.length})
+                      </h3>
+                    </div>
+                    <div className="p-4 space-y-1.5">
+                      {orphanRecipients.map(r => (
+                        <div key={r.id} className="flex items-center justify-between bg-card border border-border rounded-lg p-2.5">
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-foreground truncate">{r.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{r.email} · {r.type === 'gestao' ? 'Gestão' : r.carteira}</p>
+                          </div>
+                          <Button size="icon" variant="ghost" onClick={() => handleDeleteRecipient(r.id)} className="text-destructive hover:text-destructive shrink-0 h-8 w-8">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>

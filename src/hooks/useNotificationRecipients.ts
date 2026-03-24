@@ -7,6 +7,7 @@ export interface NotificationRecipient {
   email: string;
   type: 'carteira' | 'gestao';
   carteira: string | null;
+  project_id: string | null;
   created_at: string;
 }
 
@@ -34,7 +35,7 @@ export const useNotificationRecipients = () => {
 export const useAddRecipient = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (recipient: { name: string; email: string; type: 'carteira' | 'gestao'; carteira: string | null }) => {
+    mutationFn: async (recipient: { name: string; email: string; type: 'carteira' | 'gestao'; carteira: string | null; project_id: string | null }) => {
       const { error } = await supabase
         .from('notification_recipients')
         .insert(recipient);

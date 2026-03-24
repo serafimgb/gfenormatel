@@ -43,24 +43,24 @@ serve(async (req) => {
     console.log(`Found ${bookings?.length || 0} bookings starting in ~48h`);
 
     // Fetch all notification recipients once
-    const { data: carteiraRecipientsAll } = await supabase
+    const { data: allRecipients } = await supabase
       .from("notification_recipients")
-      .select("email, carteira")
-      .eq("type", "carteira");
-
-    const { data: gestaoRecipientsAll } = await supabase
-      .from("notification_recipients")
-      .select("email")
-      .eq("type", "gestao");
-
-    const gestaoEmails = (gestaoRecipientsAll || []).map(r => r.email);
+      .select("email, carteira, type, project_id");
 
     let sentCount = 0;
 
     for (const booking of bookings || []) {
-      // Build recipient list: carteira-specific + gestão
-      const carteiraEmails = (carteiraRecipientsAll || [])
-        .filter(r => r.carteira === booking.carteira)
+      const projectId = booking.project_id;
+
+      // Filter recipients by project
+      const projectRecipients = (allRecipients || []).filter(r => r.project_id === projectId);
+
+      const carteiraEmails = projectRecipients
+        .filter(r => r.type === "carteira" && r.carteira === booking.carteira)
+        .map(r => r.email);
+
+      const gestaoEmails = projectRecipients
+        .filter(r => r.type === "gestao")
         .map(r => r.email);
 
       const allEmails = new Set<string>([...carteiraEmails, ...gestaoEmails]);

@@ -19,6 +19,7 @@ interface BookingData {
   end: string;
   tempoServicoHoras: number;
   projectName?: string;
+  projectId?: string;
   numeroOm?: string;
   cancellationReason?: string;
   cancelledBy?: string;
@@ -106,19 +107,31 @@ serve(async (req) => {
       booking: BookingData;
     };
 
-    // Fetch recipients from database
-    // 1. Carteira-specific recipients
-    const { data: carteiraRecipients } = await supabase
+    const projectId = booking.projectId;
+
+    // Fetch recipients filtered by project
+    // 1. Carteira-specific recipients for this project
+    let carteiraQuery = supabase
       .from("notification_recipients")
       .select("email")
       .eq("type", "carteira")
       .eq("carteira", booking.carteira);
+    
+    if (projectId) {
+      carteiraQuery = carteiraQuery.eq("project_id", projectId);
+    }
+    const { data: carteiraRecipients } = await carteiraQuery;
 
-    // 2. Gestão recipients (receive ALL carteiras)
-    const { data: gestaoRecipients } = await supabase
+    // 2. Gestão recipients for this project
+    let gestaoQuery = supabase
       .from("notification_recipients")
       .select("email")
       .eq("type", "gestao");
+    
+    if (projectId) {
+      gestaoQuery = gestaoQuery.eq("project_id", projectId);
+    }
+    const { data: gestaoRecipients } = await gestaoQuery;
 
     const allEmails = new Set<string>();
     (carteiraRecipients || []).forEach(r => allEmails.add(r.email));
@@ -127,7 +140,7 @@ serve(async (req) => {
     const recipients = Array.from(allEmails);
 
     if (recipients.length === 0) {
-      console.warn(`No recipients found for carteira: ${booking.carteira}`);
+      console.warn(`No recipients found for project: ${projectId}, carteira: ${booking.carteira}`);
       return new Response(JSON.stringify({ success: true, message: "No recipients configured" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

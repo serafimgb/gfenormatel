@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, Lock, User, LogIn } from 'lucide-react';
+import { Mail, Lock, User, LogIn, Building2 } from 'lucide-react';
 
 const Login: React.FC = () => {
   const { toast } = useToast();
@@ -13,8 +13,18 @@ const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [selectedProject, setSelectedProject] = useState('');
+  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [logoError, setLogoError] = useState(false);
+
+  React.useEffect(() => {
+    const fetchProjects = async () => {
+      const { data } = await supabase.from('projects').select('id, name').order('name');
+      if (data) setProjects(data);
+    };
+    fetchProjects();
+  }, []);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,15 +32,27 @@ const Login: React.FC = () => {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        if (!selectedProject) {
+          toast({ title: "Atenção", description: "Selecione o projeto ao qual você pertence.", variant: "destructive" });
+          setLoading(false);
+          return;
+        }
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: { full_name: fullName },
+            data: { full_name: fullName, project_id: selectedProject },
             emailRedirectTo: window.location.origin,
           },
         });
         if (error) throw error;
+        // Auto-assign user to selected project after signup
+        if (signUpData?.user) {
+          await supabase.from('user_projects').insert({
+            user_id: signUpData.user.id,
+            project_id: selectedProject,
+          });
+        }
         toast({
           title: "Cadastro realizado!",
           description: "Verifique seu e-mail para confirmar a conta.",
@@ -133,20 +155,40 @@ const Login: React.FC = () => {
           {/* Email Form */}
           <form onSubmit={handleEmailAuth} className="space-y-4">
             {isSignUp && (
-              <div className="space-y-2">
-                <Label htmlFor="fullName" className="text-xs font-bold uppercase tracking-wider">Nome Completo</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="fullName"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Seu nome completo"
-                    className="pl-10"
-                    required
-                  />
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="fullName" className="text-xs font-bold uppercase tracking-wider">Nome Completo</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="fullName"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Seu nome completo"
+                      className="pl-10"
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="project" className="text-xs font-bold uppercase tracking-wider">Projeto</Label>
+                  <div className="relative">
+                    <Building2 className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                    <select
+                      id="project"
+                      value={selectedProject}
+                      onChange={(e) => setSelectedProject(e.target.value)}
+                      className="flex h-10 w-full rounded-md border border-input bg-background pl-10 pr-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:text-sm appearance-none"
+                      required
+                    >
+                      <option value="">Selecione seu projeto...</option>
+                      {projects.map(p => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </>
             )}
 
             <div className="space-y-2">
