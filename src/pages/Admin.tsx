@@ -211,16 +211,17 @@ const Admin: React.FC = () => {
   };
 
   const handleAddRecipient = async () => {
-    if (!newRecipient.name || !newRecipient.email) return;
+    if (!newRecipient.name || !newRecipient.email || !newRecipient.project_id) return;
     try {
       await addRecipient.mutateAsync({
         name: newRecipient.name,
         email: newRecipient.email,
         type: newRecipient.type,
         carteira: newRecipient.type === 'gestao' ? null : newRecipient.carteira || null,
+        project_id: newRecipient.project_id,
       });
       toast({ title: "Destinatário adicionado!" });
-      setNewRecipient({ name: '', email: '', type: 'carteira', carteira: '' });
+      setNewRecipient({ name: '', email: '', type: 'carteira', carteira: '', project_id: '' });
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     }
