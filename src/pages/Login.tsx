@@ -32,15 +32,27 @@ const Login: React.FC = () => {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        if (!selectedProject) {
+          toast({ title: "Atenção", description: "Selecione o projeto ao qual você pertence.", variant: "destructive" });
+          setLoading(false);
+          return;
+        }
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: { full_name: fullName },
+            data: { full_name: fullName, project_id: selectedProject },
             emailRedirectTo: window.location.origin,
           },
         });
         if (error) throw error;
+        // Auto-assign user to selected project after signup
+        if (signUpData?.user) {
+          await supabase.from('user_projects').insert({
+            user_id: signUpData.user.id,
+            project_id: selectedProject,
+          });
+        }
         toast({
           title: "Cadastro realizado!",
           description: "Verifique seu e-mail para confirmar a conta.",
