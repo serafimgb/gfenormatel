@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, Lock, User, LogIn } from 'lucide-react';
+import { Mail, Lock, User, LogIn, Building2 } from 'lucide-react';
 
 const Login: React.FC = () => {
   const { toast } = useToast();
@@ -13,8 +13,18 @@ const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [selectedProject, setSelectedProject] = useState('');
+  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [logoError, setLogoError] = useState(false);
+
+  React.useEffect(() => {
+    const fetchProjects = async () => {
+      const { data } = await supabase.from('projects').select('id, name').order('name');
+      if (data) setProjects(data);
+    };
+    fetchProjects();
+  }, []);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
