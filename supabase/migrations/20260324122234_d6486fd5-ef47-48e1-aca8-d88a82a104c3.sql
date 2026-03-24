@@ -1,0 +1,1 @@
+ALTER TABLE public.notification_recipients ADD COLUMN project_id text;
