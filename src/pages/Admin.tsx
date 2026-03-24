@@ -57,7 +57,7 @@ const Admin: React.FC = () => {
   const { data: recipients = [], isLoading: loadingRecipients } = useNotificationRecipients();
   const addRecipient = useAddRecipient();
   const deleteRecipient = useDeleteRecipient();
-  const [newRecipient, setNewRecipient] = useState({ name: '', email: '', type: 'carteira' as 'carteira' | 'gestao', carteira: '' });
+  const [newRecipient, setNewRecipient] = useState({ name: '', email: '', type: 'carteira' as 'carteira' | 'gestao', carteira: '', project_id: '' });
 
   // User-project assignments
   const [userProjects, setUserProjects] = useState<Record<string, string[]>>({});
