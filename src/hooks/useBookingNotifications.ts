@@ -43,6 +43,7 @@ export async function sendBookingNotification(
       end: event.end.toISOString(),
       tempoServicoHoras: event.tempoServicoHoras,
       projectName,
+      projectId: event.projectId,
       numeroOm: event.numeroOm,
       cancellationReason: options?.cancellationReason,
       cancelledBy: options?.cancelledBy,
