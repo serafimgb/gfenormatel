@@ -7,6 +7,7 @@ export interface NotificationRecipient {
   email: string;
   type: 'carteira' | 'gestao';
   carteira: string | null;
+  project_id: string | null;
   created_at: string;
 }
 
