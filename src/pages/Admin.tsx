@@ -36,6 +36,63 @@ const ROLE_BADGE_COLORS: Record<string, string> = {
   viewer: 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600',
 };
 
+const ProjectRow: React.FC<{ project: any; onDelete: (id: string) => void; onUpdate: () => void }> = ({ project, onDelete, onUpdate }) => {
+  const { toast } = useToast();
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editName, setEditName] = React.useState(project.name);
+
+  const saveProjectName = async () => {
+    if (!editName.trim()) return;
+    const { error } = await supabase.from('projects').update({ name: editName.trim() }).eq('id', project.id);
+    if (error) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Nome atualizado!" });
+      onUpdate();
+    }
+    setIsEditing(false);
+  };
+
+  return (
+    <div className="flex items-center justify-between bg-card border border-border rounded-lg p-3">
+      <div className="min-w-0 flex-1">
+        {isEditing ? (
+          <div className="flex items-center gap-2">
+            <Input
+              value={editName}
+              onChange={e => setEditName(e.target.value)}
+              className="h-8 text-sm"
+              onKeyDown={e => e.key === 'Enter' && saveProjectName()}
+              autoFocus
+            />
+            <Button size="icon" variant="ghost" onClick={saveProjectName} className="h-8 w-8 text-primary shrink-0">
+              <Check className="w-4 h-4" />
+            </Button>
+            <Button size="icon" variant="ghost" onClick={() => { setIsEditing(false); setEditName(project.name); }} className="h-8 w-8 shrink-0">
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        ) : (
+          <>
+            <p className="text-sm font-bold text-foreground truncate">{project.name}</p>
+            <p className="text-xs text-muted-foreground truncate">{project.description || project.id}</p>
+          </>
+        )}
+      </div>
+      {!isEditing && (
+        <div className="flex gap-1 shrink-0">
+          <Button size="icon" variant="ghost" onClick={() => setIsEditing(true)} className="text-muted-foreground hover:text-foreground">
+            <Pencil className="w-4 h-4" />
+          </Button>
+          <Button size="icon" variant="ghost" onClick={() => onDelete(project.id)} className="text-destructive hover:text-destructive">
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Admin: React.FC = () => {
   const { toast } = useToast();
   const { isAdmin, user } = useAuth();
